@@ -4,16 +4,22 @@ import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.moonkey.androidagent.data.llm.LLMClient
-import com.moonkey.androidagent.service.AgentOrchestrator
+import com.moonkey.androidagent.protocol.AgentEvent
+import com.moonkey.androidagent.protocol.Op
+import com.moonkey.androidagent.protocol.SessionConfig
 import com.moonkey.androidagent.service.OverlayManager
+import com.moonkey.androidagent.session.AgentSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 /**
- * AgentService - The entry point for the Accessibility Service. Orchestrates the agent execution
- * via AgentOrchestrator.
+ * AgentService - The entry point for the Accessibility Service.
+ * 
+ * **Phase 2**: Now uses AgentSession with Op/Event protocol.
+ * Operations are submitted via Op sealed class, status is received via AgentEvent Flow.
  */
 class AgentService : AccessibilityService() {
 
@@ -28,7 +34,7 @@ class AgentService : AccessibilityService() {
     }
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private var orchestrator: AgentOrchestrator? = null
+    private var session: AgentSession? = null
     private var overlayManager: OverlayManager? = null
 
     override fun onServiceConnected() {
@@ -37,17 +43,13 @@ class AgentService : AccessibilityService() {
         Log.i(TAG, "AgentService connected")
         updateStatus("Accessibility Service connected")
 
-        // Initialize Orchestrator
-        orchestrator = AgentOrchestrator(this, scope) { status -> updateStatus(status) }
-
-        // Initialize OverlayManager
-        overlayManager =
-                OverlayManager(
-                        context = this,
-                        onStop = { stopAgent() },
-                        onPause = { orchestrator?.pause() },
-                        onResume = { orchestrator?.resume() }
-                )
+        // Initialize OverlayManager with Op-based callbacks
+        overlayManager = OverlayManager(
+            context = this,
+            onStop = { submitOp(Op.Shutdown) },
+            onPause = { submitOp(Op.Pause) },
+            onResume = { submitOp(Op.Resume) }
+        )
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -59,11 +61,26 @@ class AgentService : AccessibilityService() {
     }
 
     override fun onDestroy() {
-        orchestrator?.stop()
+        submitOp(Op.Shutdown)
         overlayManager?.hide()
         super.onDestroy()
         instance = null
         scope.cancel()
+    }
+
+    /**
+     * Submit an operation to the current session.
+     */
+    private fun submitOp(op: Op) {
+        val currentSession = session
+        if (currentSession == null && op !is Op.Start) {
+            Log.w(TAG, "No active session for op: $op")
+            return
+        }
+        
+        scope.launch {
+            currentSession?.submit(op)
+        }
     }
 
     private fun updateStatus(status: String) {
@@ -72,18 +89,96 @@ class AgentService : AccessibilityService() {
         overlayManager?.updateStatus(status)
     }
 
+    /**
+     * Start observing events from the session.
+     */
+    private fun observeSession(agentSession: AgentSession) {
+        scope.launch {
+            agentSession.events.collect { event ->
+                handleEvent(event)
+            }
+        }
+    }
+
+    /**
+     * Handle events from the session.
+     */
+    private fun handleEvent(event: AgentEvent) {
+        Log.d(TAG, "Received event: ${event::class.simpleName}")
+        
+        when (event) {
+            is AgentEvent.StatusUpdate -> {
+                val displayStatus = if (event.emoji != null) {
+                    "${event.emoji} ${event.status}"
+                } else {
+                    event.status
+                }
+                updateStatus(displayStatus)
+            }
+            
+            is AgentEvent.SessionStarted -> {
+                Log.i(TAG, "Session started: ${event.sessionId}, goal: ${event.goal}")
+            }
+            
+            is AgentEvent.SessionCompleted -> {
+                Log.i(TAG, "Session completed: ${event.sessionId}, reason: ${event.reason}")
+                overlayManager?.hide()
+                session = null
+            }
+            
+            is AgentEvent.SessionError -> {
+                Log.e(TAG, "Session error: ${event.error.message}")
+                updateStatus("❌ Error: ${event.error.message}")
+            }
+            
+            is AgentEvent.SessionPaused -> {
+                Log.i(TAG, "Session paused: ${event.sessionId}")
+                overlayManager?.updatePauseState(paused = true)
+            }
+            
+            is AgentEvent.SessionResumed -> {
+                Log.i(TAG, "Session resumed: ${event.sessionId}")
+                overlayManager?.updatePauseState(paused = false)
+            }
+            
+            // Handle other events as needed
+            else -> {
+                Log.d(TAG, "Unhandled event type: ${event::class.simpleName}")
+            }
+        }
+    }
+
     /** Run the agent loop - called from MainActivity */
     fun runAgent(goal: String, apiKey: String, maxSteps: Int = 20) {
         // Initialize LLM with API Key
         LLMClient.initialize(apiKey)
 
-        updateStatus("🚀 Starting agent for goal: $goal")
+        // Create new session
+        val newSession = AgentSession.create(
+            config = SessionConfig(
+                maxTurns = maxSteps,
+                debugMode = true
+            ),
+            service = this,
+            scope = scope
+        )
+        
+        session = newSession
+        
+        // Start observing events
+        observeSession(newSession)
+        
+        // Show overlay
         overlayManager?.show()
-        orchestrator?.start(goal)
+        
+        // Submit start operation
+        scope.launch {
+            newSession.submit(Op.Start(goal = goal))
+        }
     }
 
     fun stopAgent() {
-        orchestrator?.stop()
+        submitOp(Op.Shutdown)
         overlayManager?.hide()
         updateStatus("🛑 Agent stopped")
     }

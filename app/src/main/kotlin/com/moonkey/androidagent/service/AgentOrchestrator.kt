@@ -2,13 +2,17 @@ package com.moonkey.androidagent.service
 
 import android.accessibilityservice.AccessibilityService
 import android.util.Log
-import com.moonkey.androidagent.data.perception.Perceptor
 import com.moonkey.androidagent.domain.agents.Executor
 import com.moonkey.androidagent.domain.agents.Manager
 import com.moonkey.androidagent.domain.agents.Reflector
 import com.moonkey.androidagent.domain.models.AgentAction
 import com.moonkey.androidagent.domain.models.ScreenSnapshot
 import com.moonkey.androidagent.domain.state.InfoPool
+import com.moonkey.androidagent.platform.AccessibilityPlatform
+import com.moonkey.androidagent.platform.AndroidPlatform
+import com.moonkey.androidagent.platform.ScrollDirection
+import com.moonkey.androidagent.platform.SystemButtonType
+import com.moonkey.androidagent.platform.UIAction
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,17 +21,24 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+/**
+ * AgentOrchestrator - Manages the main agent execution loop.
+ * 
+ * **Phase 3**: Now uses AndroidPlatform interface for screen capture and action execution.
+ * This allows the orchestration logic to be tested without an actual Android device.
+ */
 class AgentOrchestrator(
-        private val service: AccessibilityService,
-        private val scope: CoroutineScope,
-        private val statusListener: (String) -> Unit
+    private val service: AccessibilityService,
+    private val scope: CoroutineScope,
+    private val statusListener: (String) -> Unit,
+    // Phase 3: Platform abstraction - defaults to real implementation
+    private val platform: AndroidPlatform = AccessibilityPlatform(service)
 ) {
     private val TAG = "AgentOrchestrator"
 
     private val manager = Manager()
     private val executor = Executor()
     private val reflector = Reflector()
-    private val dispatcher = ActionDispatcher(service)
 
     private var job: Job? = null
     private var isPaused = AtomicBoolean(false)
@@ -73,16 +84,9 @@ class AgentOrchestrator(
                 continue
             }
 
-            // 1. Perception
+            // 1. Perception - Now uses platform abstraction
             statusListener("👀 Scanning Screen...")
-            // Ensure we are on main thread to get rootInActiveWindow if needed, or depends on
-            // Android API safety.
-            // rootInActiveWindow is thread-safe call but returns Node bound to thread?
-            // Usually safest to fetch root, then simplify.
-            // But Perceptor needs to traverse. Traversing nodes acts on the Main Thread usually?
-            // Actually AccessibilityNodeInfo is parcelable/transferable but calls are IPC.
-            val root = service.rootInActiveWindow
-            val currentSnapshot = Perceptor.snapshot(root)
+            val currentSnapshot = platform.captureScreen()
 
             // 2. Reflection
             if (previousSnapshot != null &&
@@ -90,30 +94,17 @@ class AgentOrchestrator(
                             lastAction !is AgentAction.FinishAction
             ) {
                 statusListener("🤔 Verifying last action...")
-                val outcome = reflector.validate(previousSnapshot!!, currentSnapshot, lastAction)
+                val outcome = reflector.validate(previousSnapshot, currentSnapshot, lastAction)
                 infoPool.recordOutcome(outcome)
                 Log.d(TAG, "Reflection Outcome: $outcome")
-
-                // If B (Failed Backtrack), we might want to trigger immediate backtrack logic or
-                // just let Manager handle it via InfoPool error flags.
-                // For MVP, we let Manager see the error logs.
             }
 
             // 3. Planning
-            // Trigger Manager if:
-            // a) Plan is empty (Start)
-            // b) Previous action was Finish/Done (Subgoal completed?) - wait, executor outputs
-            // "Done" action
-            // c) Error flag is set
-            // d) Executor says "finished subgoal"
-
             val shouldPlan =
                     infoPool.plan.isEmpty() ||
                             infoPool.errorFlagPlan ||
-                            (lastAction is AgentAction.FinishAction) // Subgoal finished?
+                            (lastAction is AgentAction.FinishAction)
 
-            // Actually, we should check if current plan is "Finished".
-            // If plan is "Finished" and verified, we are done.
             if ("Finished" in infoPool.plan && lastAction is AgentAction.FinishAction) {
                 Log.i(TAG, "Task Goal Reached!")
                 break
@@ -124,11 +115,7 @@ class AgentOrchestrator(
                 statusListener("🧠 Planning...")
                 val result = manager.think(infoPool, currentSnapshot)
                 infoPool.plan = result.plan
-                infoPool.currentSubgoal = result.completedSubgoal // Update history? Manager returns
-                // "completed_subgoal" string to log.
-
-                // Update history with completed subgoal if not empty
-                // Logic: Manager says "I completed X".
+                infoPool.currentSubgoal = result.completedSubgoal
 
                 Log.d(TAG, "New Plan: ${infoPool.plan}")
 
@@ -138,7 +125,7 @@ class AgentOrchestrator(
                 }
             }
 
-            // 4. Execution
+            // 4. Execution - Now uses platform abstraction
             Log.d(TAG, "Executing...")
             statusListener("💡 Executing...")
             val action = executor.think(infoPool, currentSnapshot)
@@ -146,22 +133,62 @@ class AgentOrchestrator(
 
             if (action is AgentAction.FinishAction) {
                 // Executor believes subgoal is done or task is done.
-                // If Executor says "Done", next loop 'shouldPlan' will be true (via lastAction
-                // type)
-                // We don't dispatch anything for FinishAction usually, unless it has reason.
             } else if (action is AgentAction.InvalidAction) {
-                // Log error
                 infoPool.errorDescriptions.add(action.reason ?: "Invalid Action")
             } else {
-                dispatcher.perform(action, currentSnapshot)
+                // Execute via platform abstraction
+                val uiAction = convertToUIAction(action)
+                if (uiAction != null) {
+                    val result = platform.performAction(uiAction, currentSnapshot)
+                    Log.d(TAG, "Action result: $result")
+                }
             }
 
             // 5. Update State
             lastAction = action
             previousSnapshot = currentSnapshot
-            infoPool.actionHistory.add(action) // Add to history
+            infoPool.actionHistory.add(action)
 
             delay(2000) // Wait for UI to settle
+        }
+    }
+    
+    /**
+     * Convert legacy AgentAction to platform UIAction.
+     */
+    private fun convertToUIAction(action: AgentAction): UIAction? {
+        if (action !is AgentAction.AtomicAction) return null
+        
+        return when (action.type) {
+            "click" -> {
+                action.elementId?.let { UIAction.Click(it) }
+            }
+            "type" -> {
+                val elementId = action.elementId ?: return null
+                val text = action.text ?: return null
+                UIAction.Type(elementId, text)
+            }
+            "scroll" -> {
+                val direction = when (action.direction?.lowercase()) {
+                    "up" -> ScrollDirection.UP
+                    "down" -> ScrollDirection.DOWN
+                    "left" -> ScrollDirection.LEFT
+                    "right" -> ScrollDirection.RIGHT
+                    else -> ScrollDirection.DOWN
+                }
+                UIAction.Scroll(direction)
+            }
+            "system" -> {
+                val button = when (action.button?.lowercase()) {
+                    "back" -> SystemButtonType.BACK
+                    "home" -> SystemButtonType.HOME
+                    "recents" -> SystemButtonType.RECENTS
+                    else -> return null
+                }
+                UIAction.SystemButton(button)
+            }
+            "wait" -> UIAction.Wait(1000)
+            else -> null
         }
     }
 }
