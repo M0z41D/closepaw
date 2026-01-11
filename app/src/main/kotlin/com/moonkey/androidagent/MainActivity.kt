@@ -1,10 +1,12 @@
 package com.moonkey.androidagent
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 
@@ -36,6 +38,17 @@ class MainActivity : AppCompatActivity() {
 
             if (apiKey.isBlank()) {
                 statusText.text = "❌ Please enter your OpenAI API key"
+                return@setOnClickListener
+            }
+
+            if (!Settings.canDrawOverlays(this)) {
+                Toast.makeText(this, "Please grant Overlay permission", Toast.LENGTH_LONG).show()
+                val intent =
+                        Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:$packageName")
+                        )
+                startActivity(intent)
                 return@setOnClickListener
             }
 
