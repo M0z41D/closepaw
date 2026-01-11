@@ -154,7 +154,7 @@ Both Codex and Gemini are production-grade agent systems, but they have differen
 **Implication for Mobile-Agent-v3**:
 Our Manager, Executor, and Reflector don't need to share conversation history - they can each have their own context optimized for their task.
 
-### 1.3 Our Unified Architecture
+### 1.6 Our Unified Architecture
 
 We combine the best of both:
 
@@ -1704,84 +1704,106 @@ suspend fun <T> withRetry(
 
 ```
 com.moonkey.androidagent/
-├── protocol/                    # STABLE - rarely changes
-│   ├── Op.kt                   # Operation sealed class
-│   ├── Event.kt                # Event sealed class
-│   ├── SessionId.kt            # Value class
-│   └── Error.kt                # Error types
 │
-├── session/                     # STABLE - lifecycle management
-│   ├── AgentSession.kt         # Main session class
-│   ├── SessionState.kt         # State machine
-│   ├── SessionConfig.kt        # Configuration
-│   ├── SessionServices.kt      # DI container for all services
-│   └── turn/                   # Turn-scoped state (from Codex)
-│       ├── TurnState.kt        # Pending approvals, buffered input
-│       └── ActiveTurn.kt       # Running tasks tracking
+├── protocol/                    # PHASE 1 - Pure data types, no dependencies
+│   ├── Op.kt                   # Operation sealed interface (UI → Session)
+│   ├── AgentEvent.kt           # Event sealed interface (Session → UI)
+│   ├── SessionId.kt            # Value class for session ID
+│   ├── SessionState.kt         # Lifecycle state machine
+│   ├── AgentError.kt           # Error type hierarchy
+│   └── ApprovalTypes.kt        # ApprovalDecision, ApprovalDetails, RiskLevel
 │
-├── infra/                       # STABLE - infrastructure components
-│   ├── registry/               # Registration and discovery
-│   │   ├── ToolRegistry.kt     # Tool registration & schemas
-│   │   └── AgentRegistry.kt    # Agent definitions registry
-│   ├── history/                # Conversation history management
-│   │   └── HistoryManager.kt   # History, truncation, normalization
-│   ├── policy/                 # Policy and approval
-│   │   ├── PolicyEngine.kt     # Policy decisions (allow/deny/ask)
-│   │   └── ApprovalManager.kt  # User approval flow
-│   └── llm/                    # LLM abstraction
-│       ├── LLMClient.kt        # Interface
-│       ├── OpenAIClient.kt     # OpenAI implementation
-│       └── Message.kt          # Message types
+├── session/                     # PHASE 2 - Session lifecycle management
+│   ├── AgentSession.kt         # Main session class with Op/Event protocol
+│   ├── SessionConfig.kt        # Configuration (model, approval mode, etc.)
+│   └── SessionServices.kt      # PHASE 5 - DI container for all services
 │
-├── orchestration/               # EVOLVING - agent strategies
-│   ├── AgentOrchestration.kt   # Interface
+├── platform/                    # PHASE 3 - Android abstraction
+│   ├── AndroidPlatform.kt      # Interface for platform operations
+│   ├── AccessibilityPlatform.kt # Real implementation wrapping existing code
+│   ├── UIAction.kt             # Action data types (click, type, scroll)
+│   ├── ActionResult.kt         # Result data types (success, error)
+│   └── mock/
+│       └── MockPlatform.kt     # Test implementation
+│
+├── infra/                       # PHASE 4-5 - Infrastructure components
+│   ├── tools/                  # PHASE 4 - Tool infrastructure
+│   │   ├── ToolSpec.kt         # Tool specification interface
+│   │   ├── ToolInvocation.kt   # Executable invocation
+│   │   ├── ToolCallState.kt    # State machine (validating→executing→done)
+│   │   ├── ToolCallResult.kt   # Result types (success, error, cancelled)
+│   │   └── ToolRouter.kt       # Tool execution with state machine
+│   ├── registry/               # PHASE 4-5 - Registration and discovery
+│   │   ├── ToolRegistry.kt     # Tool registration & schema generation
+│   │   └── AgentRegistry.kt    # Agent definitions registry (PHASE 5)
+│   ├── policy/                 # PHASE 4 - Policy and approval
+│   │   └── PolicyEngine.kt     # Policy decisions (allow/deny/ask)
+│   └── history/                # PHASE 5 - Conversation history
+│       └── HistoryManager.kt   # History, truncation, normalization
+│
+├── tools/                       # PHASE 4 - Tool implementations
+│   ├── impl/
+│   │   ├── ClickTool.kt
+│   │   ├── TypeTool.kt
+│   │   ├── ScrollTool.kt
+│   │   ├── SwipeTool.kt
+│   │   └── BackTool.kt
+│   └── base/
+│       └── BaseTool.kt         # Common tool implementation helpers
+│
+├── orchestration/               # PHASE 6 - Agent coordination strategies
+│   ├── AgentOrchestration.kt   # Interface for orchestration strategies
 │   ├── OrchestrationFactory.kt # Factory interface
-│   ├── v3/                     # Mobile-Agent-v3 style
+│   ├── v3/                     # Mobile-Agent-v3 multi-agent style
 │   │   ├── MobileV3Orchestration.kt
 │   │   └── SessionExecutionState.kt
-│   └── simple/                 # Simple single-agent (fallback)
-│       └── SimpleOrchestration.kt
+│   └── legacy/                 # Adapter for existing orchestrator
+│       └── LegacyOrchestrationAdapter.kt
 │
-├── agents/                      # EVOLVING - agent implementations
-│   ├── Agent.kt                # Base interface
+├── agents/                      # PHASE 6 - Agent implementations
+│   ├── Agent.kt                # Agent interface
 │   ├── AgentFactory.kt         # Creates instances from definitions
-│   ├── AgentDefinition.kt      # Agent specification (data class)
-│   ├── impl/                   # Agent implementations
-│   │   ├── LocalAgent.kt       # Local LLM-based agent
-│   │   ├── ManagerAgent.kt     # Planning specialization
-│   │   ├── ExecutorAgent.kt    # Execution specialization
-│   │   └── ReflectorAgent.kt   # Verification specialization
-│   └── prompts/                # Prompt templates
-│       ├── ManagerPrompts.kt
-│       ├── ExecutorPrompts.kt
-│       └── ReflectorPrompts.kt
+│   ├── AgentDefinition.kt      # Agent specification data class
+│   └── impl/
+│       ├── LocalAgent.kt       # Local LLM-based agent
+│       └── RemoteAgent.kt      # Future: remote agents via A2A
 │
-├── tools/                       # STABLE interface, EVOLVING implementations
-│   ├── ToolSpec.kt             # Tool specification interface
-│   ├── ToolRouter.kt           # Execution with approval flow
-│   ├── ToolInvocation.kt       # Executable invocation
-│   ├── ToolCallState.kt        # State machine (validating→executing→success)
-│   └── impl/                   # Tool implementations
-│       ├── ClickTool.kt
-│       ├── TypeTool.kt
-│       ├── ScrollTool.kt
-│       └── SwipeTool.kt
+├── domain/                      # EXISTING - Domain models (kept for compatibility)
+│   ├── agents/                 # Existing agent implementations
+│   │   ├── Agent.kt
+│   │   ├── Executor.kt
+│   │   ├── Manager.kt
+│   │   └── Reflector.kt
+│   ├── models/
+│   │   └── Models.kt           # AgentAction, ScreenSnapshot, etc.
+│   └── state/
+│       └── InfoPool.kt         # Existing state management
 │
-├── platform/                    # STABLE - Android abstraction
-│   ├── AndroidPlatform.kt      # Interface
-│   ├── AccessibilityPlatform.kt # Real implementation
-│   ├── Perceptor.kt            # Screen parsing
-│   ├── ActionDispatcher.kt     # Gesture execution
-│   └── mock/                   # Testing support
-│       └── MockPlatform.kt
+├── data/                        # EXISTING - Data layer
+│   ├── llm/
+│   │   ├── LLMClient.kt
+│   │   └── ChatMessage.kt
+│   └── perception/
+│       └── Perceptor.kt
 │
-├── service/                     # Android service integration
-│   ├── AgentService.kt         # AccessibilityService
+├── service/                     # EXISTING - Android service integration
+│   ├── AgentService.kt         # AccessibilityService entry point
+│   ├── AgentOrchestrator.kt    # LEGACY - Existing orchestrator
+│   ├── ActionDispatcher.kt     # LEGACY - Action execution
 │   └── OverlayManager.kt       # Floating UI
 │
-└── ui/                          # UI layer
-    └── MainActivity.kt
+├── ui/
+│   └── MainActivity.kt
+│
+└── legacy/                      # PHASE 7 - Deprecated code (for removal)
+    └── (code moved here before deletion)
 ```
+
+**Notes**:
+- `PHASE N` comments indicate when each package is introduced
+- `EXISTING` packages contain current code that will be wrapped/migrated
+- `LEGACY` marks code that will be replaced by new implementations
+- The structure supports incremental migration with clear boundaries
 
 ---
 
@@ -1848,31 +1870,244 @@ class AgentSessionTest {
 
 ## 9. Migration Path
 
-### Phase 1: Protocol & Session (Week 1)
-1. Define `Op` and `AgentEvent` sealed classes
-2. Implement `AgentSession` with state machine
-3. Wire up to existing overlay buttons
+**Design Principles for Migration**:
+1. **Each phase is independently deployable** - The app works on device after each phase
+2. **No forward dependencies** - Each phase only uses code from previous phases
+3. **Backward compatible** - Existing functionality is preserved until explicitly replaced
+4. **Testable checkpoints** - Each phase has clear validation criteria
 
-### Phase 2: Platform Abstraction (Week 1-2)
-1. Extract `AndroidPlatform` interface
-2. Create `AccessibilityPlatform` wrapping current code
-3. Add `MockPlatform` for testing
+### Phase 1: Protocol Layer (Days 1-2)
+**Goal**: Define the communication protocol as pure data types with no dependencies.
 
-### Phase 3: Tool Infrastructure (Week 2)
-1. Define `ToolSpec` and `ToolInvocation`
-2. Implement `ToolRouter`
-3. Migrate `ActionDispatcher` to tool format
+**Tasks**:
+1. Create `protocol/` package with:
+   - `Op.kt` - Operations sealed interface
+   - `AgentEvent.kt` - Events sealed interface
+   - `SessionId.kt` - Value class for session identification
+   - `SessionState.kt` - State machine states
+   - `AgentError.kt` - Error type hierarchy
+   - `ApprovalTypes.kt` - Approval-related types (ApprovalDecision, ApprovalDetails)
 
-### Phase 4: Orchestration Migration (Week 3)
-1. Implement `MobileV3Orchestration` using new infra
-2. Keep old `AgentOrchestrator` as fallback
-3. A/B test both approaches
+**Validation**:
+- ✅ Project compiles
+- ✅ Unit tests pass for data classes (serialization, equality)
+- ✅ No runtime changes - existing app unchanged
 
-### Phase 5: Polish (Week 4)
-1. Add comprehensive error handling
-2. Implement retry logic with backoff
-3. Add telemetry and logging
-4. Write tests
+**Deliverables**:
+```
+protocol/
+├── Op.kt                 # Sealed interface for UI → Session operations
+├── AgentEvent.kt         # Sealed interface for Session → UI events
+├── SessionId.kt          # @JvmInline value class
+├── SessionState.kt       # Sealed interface for lifecycle states
+├── AgentError.kt         # Sealed class hierarchy for errors
+└── ApprovalTypes.kt      # ApprovalDecision, ApprovalDetails, RiskLevel
+```
+
+---
+
+### Phase 2: Session Bridge (Days 3-4)
+**Goal**: Introduce AgentSession as a facade over existing AgentOrchestrator, using the new protocol.
+
+**Tasks**:
+1. Create `session/AgentSession.kt` that:
+   - Accepts `Op` operations via `submit()` method
+   - Emits `AgentEvent` via `Flow<AgentEvent>`
+   - **Internally delegates to existing `AgentOrchestrator`** (bridge pattern)
+   - Maintains `SessionState` state machine
+
+2. Update `AgentService.kt` to:
+   - Create and hold `AgentSession` instead of direct `AgentOrchestrator`
+   - Forward overlay button presses as `Op.Pause`, `Op.Resume`, `Op.Shutdown`
+
+3. Update `OverlayManager.kt` to:
+   - Observe `AgentSession.events` Flow for status updates
+   - Convert current callback-based status to event-driven
+
+**Validation**:
+- ✅ App runs on device with identical behavior
+- ✅ Overlay buttons still work (pause/resume/stop)
+- ✅ Status updates appear in overlay
+- ✅ `adb logcat` shows Op/Event flow
+
+**Key Code - Bridge Pattern**:
+```kotlin
+// AgentSession internally uses existing orchestrator
+class AgentSession(...) {
+    private val legacyOrchestrator: AgentOrchestrator  // Bridge to existing code
+    
+    suspend fun submit(op: Op) {
+        when (op) {
+            is Op.Pause -> legacyOrchestrator.pause()
+            is Op.Resume -> legacyOrchestrator.resume()
+            // etc.
+        }
+    }
+}
+```
+
+---
+
+### Phase 3: Platform Abstraction (Days 5-7)
+**Goal**: Abstract Android-specific code behind interfaces for testability.
+
+**Tasks**:
+1. Create `platform/AndroidPlatform.kt` interface with:
+   - `captureScreen(): ScreenSnapshot`
+   - `performAction(action: UIAction): ActionResult`
+   - `hasRequiredPermissions(): Boolean`
+
+2. Create `platform/AccessibilityPlatform.kt`:
+   - Wraps existing `Perceptor` and `ActionDispatcher`
+   - Implements `AndroidPlatform` interface
+
+3. Create `platform/mock/MockPlatform.kt` for testing
+
+4. Update `AgentOrchestrator` to use `AndroidPlatform` interface
+
+**Validation**:
+- ✅ App runs on device with identical behavior
+- ✅ Can write unit test for orchestrator logic with MockPlatform
+- ✅ No behavioral changes to end user
+
+**Deliverables**:
+```
+platform/
+├── AndroidPlatform.kt         # Interface
+├── AccessibilityPlatform.kt   # Real implementation
+├── UIAction.kt                # Action data types
+├── ActionResult.kt            # Result data types
+└── mock/
+    └── MockPlatform.kt        # Test implementation
+```
+
+---
+
+### Phase 4: Tool Infrastructure (Week 2)
+**Goal**: Create tool registry and execution infrastructure, migrate ActionDispatcher.
+
+**Tasks**:
+1. Create `infra/tools/` package with:
+   - `ToolSpec.kt` - Tool specification interface
+   - `ToolInvocation.kt` - Executable invocation
+   - `ToolCallState.kt` - State machine (validating → executing → done)
+   - `ToolCallResult.kt` - Result types
+
+2. Create `infra/registry/ToolRegistry.kt`:
+   - Tool registration and lookup
+   - Schema generation for LLM function calling
+
+3. Create `infra/policy/PolicyEngine.kt`:
+   - Simple implementation (ALLOW all for now)
+
+4. Create `infra/tools/ToolRouter.kt`:
+   - Executes tools through state machine
+   - Uses PolicyEngine for approval decisions
+
+5. Implement tools in `tools/impl/`:
+   - `ClickTool.kt`, `TypeTool.kt`, `ScrollTool.kt`, `SwipeTool.kt`, `BackTool.kt`
+   - Each wraps corresponding ActionDispatcher functionality
+
+6. Update `AccessibilityPlatform` to use tools internally
+
+**Validation**:
+- ✅ App runs on device with identical behavior
+- ✅ Tool calls flow through state machine (visible in logs)
+- ✅ Can unit test tool validation logic
+
+---
+
+### Phase 5: Infrastructure Services (Week 2-3)
+**Goal**: Complete infrastructure layer with remaining services.
+
+**Tasks**:
+1. Create `infra/history/HistoryManager.kt`:
+   - Conversation history tracking
+   - Truncation policies
+   - Turn rollback capability
+
+2. Create `infra/registry/AgentRegistry.kt`:
+   - Agent definition storage
+   - Built-in Mobile-Agent-v3 agent definitions
+
+3. Create `session/SessionServices.kt`:
+   - DI container aggregating all services
+   - Factory method for proper initialization order
+
+4. Update `AgentSession` to use `SessionServices`
+
+**Validation**:
+- ✅ App runs on device
+- ✅ History is tracked (visible in debug logs)
+- ✅ Services properly initialized in correct order
+
+---
+
+### Phase 6: New Orchestration (Week 3)
+**Goal**: Implement proper MobileV3Orchestration using new infrastructure.
+
+**Tasks**:
+1. Create `orchestration/AgentOrchestration.kt` interface
+
+2. Create `orchestration/OrchestrationFactory.kt` interface
+
+3. Create `orchestration/v3/MobileV3Orchestration.kt`:
+   - Implements `AgentOrchestration`
+   - Uses `SessionServices` for all dependencies
+   - Proper cooperative pause/resume/interrupt
+
+4. Create `orchestration/legacy/LegacyOrchestrationAdapter.kt`:
+   - Wraps old `AgentOrchestrator` as `AgentOrchestration`
+   - Allows fallback via config flag
+
+5. Update `AgentSession` to use `OrchestrationFactory`
+
+6. Add config flag to choose orchestration:
+   - `SessionConfig.useNewOrchestration: Boolean`
+
+**Validation**:
+- ✅ App works with BOTH orchestrations (toggle via config)
+- ✅ New orchestration has cleaner logs
+- ✅ Pause/resume/interrupt work correctly
+- ✅ A/B testing possible
+
+---
+
+### Phase 7: Polish & Cleanup (Week 4)
+**Goal**: Production-ready with comprehensive error handling.
+
+**Tasks**:
+1. Add retry with exponential backoff for LLM calls
+2. Implement proper CancellationSignal propagation
+3. Add telemetry/structured logging
+4. Write comprehensive tests:
+   - Unit tests for each component
+   - Integration tests with MockPlatform
+   - Instrumented tests on device
+5. Remove legacy code when new orchestration is stable
+6. Documentation cleanup
+
+**Validation**:
+- ✅ Graceful error handling (no crashes on LLM timeout)
+- ✅ Clean shutdown (no leaked resources)
+- ✅ Test coverage > 70%
+- ✅ No legacy code paths in use
+
+---
+
+### Migration Summary
+
+| Phase | Duration | Risk | Rollback |
+|-------|----------|------|----------|
+| 1. Protocol | 2 days | None | N/A (additive) |
+| 2. Session Bridge | 2 days | Low | Remove AgentSession, revert AgentService |
+| 3. Platform | 3 days | Low | Inline interface calls |
+| 4. Tools | 5 days | Medium | Use ActionDispatcher directly |
+| 5. Services | 3 days | Low | Remove unused services |
+| 6. Orchestration | 5 days | Medium | Config flag to use legacy |
+| 7. Polish | 5 days | Low | N/A |
+
+**Total**: ~4 weeks with buffer for testing and iteration
 
 ---
 
