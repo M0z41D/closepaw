@@ -1,6 +1,8 @@
 package com.moonkey.androidagent.orchestration.v3
 
+import android.os.Environment
 import android.util.Log
+import com.moonkey.androidagent.data.perception.Perceptor
 import com.moonkey.androidagent.domain.agents.Executor
 import com.moonkey.androidagent.domain.agents.Manager
 import com.moonkey.androidagent.domain.agents.Reflector
@@ -20,6 +22,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -52,6 +58,7 @@ class MobileV3Orchestration(
     
     companion object {
         private const val TAG = "MobileV3Orchestration"
+        private const val DEBUG = true  // Enable verbose debugging
     }
     
     // Agents (using existing domain implementations)
@@ -76,6 +83,13 @@ class MobileV3Orchestration(
     override suspend fun run() {
         Log.i(TAG, "Starting MobileV3Orchestration for goal: ${config.goal}")
         emitStatus("🚀 Starting agent for: ${config.goal}")
+        
+        // Initialize debug logging
+        initDebugLog()
+        debugLog("=== ORCHESTRATION START ===")
+        debugLog("Goal: ${config.goal}")
+        debugLog("Max turns: ${config.maxTurns}")
+        debugLog("Action delay: ${config.actionDelayMs}ms")
         
         var previousSnapshot: ScreenSnapshot? = null
         
@@ -111,11 +125,14 @@ class MobileV3Orchestration(
             when (turnResult) {
                 is TurnResult.Continue -> {
                     // Wait for UI to settle
+                    debugLog("Main loop: Waiting ${config.actionDelayMs}ms for UI to settle...")
                     delay(config.actionDelayMs)
                     // Use the before-action snapshot for next turn's reflection
                     // This allows comparing "before action" vs "after action (next turn's capture)"
+                    debugLog("Main loop: Setting previousSnapshot = beforeSnapshot (ts=${turnResult.beforeSnapshot?.timestamp})")
                     previousSnapshot = turnResult.beforeSnapshot
                     executionState.recordAction(turnResult.action)
+                    debugLog("Main loop: Recorded action in history. Total actions: ${executionState.actionHistory.size}")
                 }
                 is TurnResult.Finished -> {
                     Log.i(TAG, "Task finished: ${turnResult.reason}")
@@ -174,11 +191,79 @@ class MobileV3Orchestration(
     
     // ===== Turn Execution =====
     
+    // Debug log file
+    private var debugLogFile: File? = null
+    private val debugSessionId = SimpleDateFormat("HHmmss", Locale.US).format(Date())
+    
+    /**
+     * Initialize debug log file.
+     */
+    private fun initDebugLog() {
+        if (!DEBUG) return
+        try {
+            val debugDir = File(Environment.getExternalStorageDirectory(), "agent_debug")
+            debugDir.mkdirs()
+            debugLogFile = File(debugDir, "session_$debugSessionId.log")
+            debugLogFile?.writeText("=== Debug Session $debugSessionId ===\nGoal: ${config.goal}\n\n")
+            Log.i(TAG, "Debug log: ${debugLogFile?.absolutePath}")
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not create debug log file: ${e.message}")
+        }
+    }
+    
+    /**
+     * Write to debug log file.
+     */
+    private fun debugLog(message: String) {
+        if (!DEBUG) return
+        val timestamp = SimpleDateFormat("HH:mm:ss.SSS", Locale.US).format(Date())
+        val line = "[$timestamp] $message\n"
+        Log.d(TAG, message)
+        try {
+            debugLogFile?.appendText(line)
+        } catch (e: Exception) {
+            // Ignore file write errors
+        }
+    }
+    
+    /**
+     * Log detailed snapshot info for debugging.
+     */
+    private fun logSnapshot(label: String, snapshot: ScreenSnapshot?) {
+        if (!DEBUG || snapshot == null) return
+        
+        val sb = StringBuilder()
+        sb.appendLine("=== SNAPSHOT [$label] ===")
+        sb.appendLine("  Timestamp: ${snapshot.timestamp}")
+        sb.appendLine("  Elements: ${snapshot.elements.size}")
+        snapshot.elements.forEachIndexed { idx, el ->
+            val truncatedText = el.text.take(40).replace("\n", " ")
+            val truncatedDesc = el.description.take(40).replace("\n", " ")
+            sb.appendLine("  [$idx] ${el.className} | text='$truncatedText' | desc='$truncatedDesc' | clickable=${el.isClickable} | bounds=${el.bounds.toList()}")
+        }
+        sb.appendLine("=== END SNAPSHOT [$label] ===")
+        
+        debugLog(sb.toString())
+    }
+    
+    /**
+     * Log the JSON representation sent to LLM.
+     */
+    private fun logSnapshotJson(label: String, snapshot: ScreenSnapshot?) {
+        if (!DEBUG || snapshot == null) return
+        val json = Perceptor.toPromptJson(snapshot)
+        debugLog("=== SNAPSHOT JSON [$label] ===\n$json\n=== END JSON ===")
+    }
+    
     /**
      * Execute a single turn of the agent loop.
      */
     private suspend fun executeTurn(previousSnapshot: ScreenSnapshot?): TurnResult {
         val turnId = "turn-${executionState.turnCount}"
+        val turnNum = executionState.turnCount
+        debugLog("\n" + "=".repeat(60))
+        debugLog("TURN $turnNum START")
+        debugLog("=".repeat(60))
         
         try {
             // 1. PERCEPTION
@@ -186,6 +271,10 @@ class MobileV3Orchestration(
             emitStatus("👀 Scanning screen...")
             val currentSnapshot = services.platform.captureScreen()
             emitScreenCaptured(currentSnapshot)
+            
+            debugLog("\n>>> PERCEPTION (Turn $turnNum)")
+            logSnapshot("Turn${turnNum}_Current", currentSnapshot)
+            logSnapshotJson("Turn${turnNum}_Current", currentSnapshot)
             
             // Check for interrupt/cancel
             if (interruptRequested) return TurnResult.Interrupted
@@ -198,12 +287,34 @@ class MobileV3Orchestration(
                     emitTurnPhase(turnId, TurnPhase.REFLECTION)
                     emitStatus("🤔 Verifying last action...")
                     
+                    debugLog("\n>>> REFLECTION (Turn $turnNum)")
+                    debugLog("Last action to verify: $lastAction")
+                    debugLog("Before snapshot timestamp: ${previousSnapshot.timestamp}")
+                    debugLog("After snapshot timestamp: ${currentSnapshot.timestamp}")
+                    debugLog("Time difference: ${currentSnapshot.timestamp - previousSnapshot.timestamp}ms")
+                    debugLog("Before elements count: ${previousSnapshot.elements.size}")
+                    debugLog("After elements count: ${currentSnapshot.elements.size}")
+                    
+                    // Compare element differences
+                    val beforeTexts = previousSnapshot.elements.map { "${it.index}:${it.text.take(20)}" }.toSet()
+                    val afterTexts = currentSnapshot.elements.map { "${it.index}:${it.text.take(20)}" }.toSet()
+                    val added = afterTexts - beforeTexts
+                    val removed = beforeTexts - afterTexts
+                    debugLog("Elements ADDED: ${added.take(5)}")
+                    debugLog("Elements REMOVED: ${removed.take(5)}")
+                    
+                    logSnapshot("Turn${turnNum}_Before_For_Reflection", previousSnapshot)
+                    logSnapshot("Turn${turnNum}_After_For_Reflection", currentSnapshot)
+                    
                     val outcome = reflector.validate(previousSnapshot, currentSnapshot, lastAction)
                     executionState.recordOutcome(outcome)
                     
+                    debugLog("REFLECTION RESULT: $outcome")
                     emitThought("reflector", "Outcome: ${outcome.description}")
-                    Log.d(TAG, "Reflection outcome: $outcome")
                 }
+            } else {
+                debugLog("\n>>> REFLECTION SKIPPED")
+                debugLog("Reason: previousSnapshot=${previousSnapshot != null}, historySize=${executionState.actionHistory.size}")
             }
             
             // Check for interrupt/cancel
@@ -244,35 +355,50 @@ class MobileV3Orchestration(
             emitStatus("💡 Executing...")
             
             val infoPool = createInfoPoolContext()
+            
+            debugLog("\n>>> EXECUTION (Turn $turnNum)")
+            debugLog("Current plan: ${executionState.plan}")
+            debugLog("Action history (last 3): ${executionState.actionHistory.takeLast(3)}")
+            debugLog("Outcomes (last 3): ${executionState.outcomes.takeLast(3)}")
+            
             val action = executor.think(infoPool, currentSnapshot)
             
+            debugLog("ACTION DECIDED: $action")
             emitThought("executor", "Action: ${formatAction(action)}")
-            Log.d(TAG, "Action decided: $action")
             
             // Handle action
-            return when (action) {
+            val result = when (action) {
                 is AgentAction.FinishAction -> {
+                    debugLog("TURN $turnNum END: FINISHED - ${action.reason}")
                     TurnResult.Finished(action.reason ?: "Executor marked done")
                 }
                 is AgentAction.InvalidAction -> {
+                    debugLog("TURN $turnNum END: INVALID - ${action.reason}")
                     TurnResult.Error(action.reason ?: "Invalid action", recoverable = true)
                 }
                 else -> {
                     // Execute the action
                     val uiAction = convertToUIAction(action)
                     if (uiAction != null) {
-                        val result = services.platform.performAction(uiAction, currentSnapshot)
-                        Log.d(TAG, "Action result: $result")
+                        debugLog("Converted to UIAction: $uiAction")
+                        val actionResult = services.platform.performAction(uiAction, currentSnapshot)
+                        debugLog("ACTION RESULT: $actionResult")
                         emitStatus("✓ ${formatAction(action)}")
+                    } else {
+                        debugLog("ERROR: Could not convert action to UIAction: $action")
                     }
+                    debugLog("TURN $turnNum END: CONTINUE")
+                    debugLog("Storing currentSnapshot (ts=${currentSnapshot.timestamp}) as beforeSnapshot for next turn")
                     // Return with the BEFORE snapshot so next turn can compare
                     // before (currentSnapshot) vs after (next turn's capture)
                     TurnResult.Continue(action, beforeSnapshot = currentSnapshot)
                 }
             }
+            return result
             
         } catch (e: Exception) {
             Log.e(TAG, "Turn execution failed", e)
+            Log.i(TAG, "========== TURN ${executionState.turnCount} END (ERROR) ==========")
             return TurnResult.Error(e.message ?: "Unknown error", recoverable = true)
         }
     }

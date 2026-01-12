@@ -9,6 +9,9 @@ After code changes:
 Run tests:
     ./scripts/dev.sh run            # Run agent test
     ./scripts/dev.sh logs           # View logs
+
+Debug issues:
+    ./scripts/debug-run.sh "goal"   # Run with screenshot capture per turn
 ```
 
 ## Scripts
@@ -72,6 +75,21 @@ SessionConfig(useNewOrchestration = true, ...)
 // Legacy Orchestration
 SessionConfig(useNewOrchestration = false, ...)
 ```
+
+### `debug-run.sh` - Visual Debugging
+
+Capture screenshots at each turn for debugging agent behavior.
+
+```bash
+./scripts/debug-run.sh "Open Chrome"
+```
+
+Output in `debug-output/`:
+- `turn_N.png` - Screenshot at each turn
+- `turn_N_log.txt` - Log excerpt per turn
+- `orchestration.log` - Full orchestration log
+
+See **[agent_process_visual_debug.md](./agent_process_visual_debug.md)** for detailed debugging workflow.
 
 ## Troubleshooting
 

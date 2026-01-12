@@ -41,6 +41,9 @@ echo "         Android Agent - Build & Deploy                        "
 echo "=============================================================="
 echo -e "${NC}"
 
+# 0. If no device, then start an android emulator.
+# ~/Library/Android/sdk/emulator/emulator @Pixel_Test -no-boot-anim &
+
 # 1. Check device
 log "Checking device connection..."
 if ! adb get-state >/dev/null 2>&1; then
