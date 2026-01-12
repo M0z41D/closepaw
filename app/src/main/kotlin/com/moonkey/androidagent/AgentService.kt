@@ -153,27 +153,37 @@ class AgentService : AccessibilityService() {
         // Initialize LLM with API Key
         LLMClient.initialize(apiKey)
 
-        // Create new session
-        val newSession = AgentSession.create(
-            config = SessionConfig(
-                maxTurns = maxSteps,
-                debugMode = true
-            ),
-            service = this,
-            scope = scope
-        )
-        
-        session = newSession
-        
-        // Start observing events
-        observeSession(newSession)
-        
-        // Show overlay
+        // Show overlay immediately
         overlayManager?.show()
-        
-        // Submit start operation
+        updateStatus("🚀 Starting agent...")
+
+        // Create session in coroutine (createWithServices is suspend)
         scope.launch {
-            newSession.submit(Op.Start(goal = goal))
+            try {
+                // Create new session with Phase 6 orchestration
+                val newSession = AgentSession.createWithServices(
+                    config = SessionConfig(
+                        maxTurns = maxSteps,
+                        debugMode = true,
+                        useNewOrchestration = true  // Use MobileV3Orchestration
+                    ),
+                    service = this@AgentService,
+                    scope = scope
+                )
+                
+                session = newSession
+                
+                // Start observing events
+                observeSession(newSession)
+                
+                // Submit start operation
+                newSession.submit(Op.Start(goal = goal))
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to create session", e)
+                updateStatus("❌ Failed to start: ${e.message}")
+                overlayManager?.hide()
+            }
         }
     }
 

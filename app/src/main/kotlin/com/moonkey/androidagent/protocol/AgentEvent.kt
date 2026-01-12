@@ -224,10 +224,16 @@ enum class CompletionReason {
     USER_STOPPED,
     
     /** Maximum turns reached */
-    MAX_TURNS_REACHED,
+    MAX_TURNS,
+    
+    /** Timeout limit reached */
+    TIMEOUT,
     
     /** Agent decided the task cannot be completed */
     TASK_IMPOSSIBLE,
+    
+    /** An error occurred */
+    ERROR,
     
     /** Session was interrupted */
     INTERRUPTED

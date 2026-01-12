@@ -32,7 +32,9 @@ class AccessibilityPlatform(
     override suspend fun captureScreen(): ScreenSnapshot {
         return withContext(Dispatchers.Main) {
             val root = service.rootInActiveWindow
-            Perceptor.snapshot(root)
+            val snapshot = Perceptor.snapshot(root)
+            Log.d(TAG, "Captured screen: ${snapshot.elements.size} elements, package: ${root?.packageName}")
+            snapshot
         }
     }
     
@@ -134,14 +136,17 @@ class AccessibilityPlatform(
         val display = getDisplayInfo()
         val centerX = display.widthPixels / 2f
         
+        // Use safe regions to avoid triggering system gestures
+        // Status bar is typically top ~100px, nav bar is bottom ~150px
+        // Avoid top 0.35 (status bar pull-down zone) and bottom 0.15 (nav gestures)
         val (startY, endY) = when (action.direction) {
             ScrollDirection.DOWN -> {
-                // Swipe up to scroll down
-                display.heightPixels * 0.7f to display.heightPixels * 0.3f
+                // Swipe up to scroll down: start from lower middle, end at upper middle
+                display.heightPixels * 0.75f to display.heightPixels * 0.35f
             }
             ScrollDirection.UP -> {
-                // Swipe down to scroll up
-                display.heightPixels * 0.3f to display.heightPixels * 0.7f
+                // Swipe down to scroll up: start from upper middle (but not too high!), end at lower
+                display.heightPixels * 0.45f to display.heightPixels * 0.85f
             }
             ScrollDirection.LEFT, ScrollDirection.RIGHT -> {
                 // Horizontal scroll - use center Y
@@ -151,14 +156,17 @@ class AccessibilityPlatform(
         
         val (startX, endX) = when (action.direction) {
             ScrollDirection.LEFT -> {
+                // Swipe right to left to scroll left
                 display.widthPixels * 0.8f to display.widthPixels * 0.2f
             }
             ScrollDirection.RIGHT -> {
+                // Swipe left to right to scroll right
                 display.widthPixels * 0.2f to display.widthPixels * 0.8f
             }
             else -> centerX to centerX
         }
         
+        Log.d(TAG, "Performing scroll ${action.direction}: ($startX, $startY) -> ($endX, $endY)")
         return performSwipeGesture(startX, startY, endX, endY, SWIPE_GESTURE_DURATION_MS)
     }
     
@@ -173,17 +181,22 @@ class AccessibilityPlatform(
     }
     
     private suspend fun performSystemButton(action: UIAction.SystemButton): ActionResult {
-        val globalAction = when (action.button) {
-            SystemButtonType.BACK -> AccessibilityService.GLOBAL_ACTION_BACK
-            SystemButtonType.HOME -> AccessibilityService.GLOBAL_ACTION_HOME
-            SystemButtonType.RECENTS -> AccessibilityService.GLOBAL_ACTION_RECENTS
-        }
-        
-        val result = service.performGlobalAction(globalAction)
-        return if (result) {
-            ActionResult.Success("System button: ${action.button}")
-        } else {
-            ActionResult.Failure("Failed to perform system action: ${action.button}")
+        return withContext(Dispatchers.Main) {
+            val globalAction = when (action.button) {
+                SystemButtonType.BACK -> AccessibilityService.GLOBAL_ACTION_BACK
+                SystemButtonType.HOME -> AccessibilityService.GLOBAL_ACTION_HOME
+                SystemButtonType.RECENTS -> AccessibilityService.GLOBAL_ACTION_RECENTS
+            }
+            
+            Log.d(TAG, "Performing global action: ${action.button} -> $globalAction")
+            val result = service.performGlobalAction(globalAction)
+            Log.d(TAG, "Global action result: $result")
+            
+            if (result) {
+                ActionResult.Success("System button: ${action.button}")
+            } else {
+                ActionResult.Failure("Failed to perform system action: ${action.button}")
+            }
         }
     }
     
