@@ -13,16 +13,17 @@ import kotlinx.coroutines.delay
 import org.json.JSONObject
 
 /**
- * Invocation for click action using multi-selector fallback.
+ * Invocation for long_press action using multi-selector fallback.
  */
-class ClickTargetInvocation(
+class LongPressTargetInvocation(
     override val params: JSONObject,
     private val description: String
 ) : ToolInvocation {
 
     companion object {
-        private const val TAG = "ClickTargetInvocation"
+        private const val TAG = "LongPressTargetInvocation"
         private const val UI_SETTLE_DELAY_MS = 300L
+        private const val DEFAULT_DURATION_MS = 1000L
     }
 
     override val toolName: String = "mobile_action"
@@ -41,13 +42,13 @@ class ClickTargetInvocation(
             return ToolExecutionResult.Cancelled("Cancelled before execution")
         }
 
+        val durationMs = params.optLong("duration_ms", DEFAULT_DURATION_MS)
         val snapshot = context.currentSnapshot
-            ?: return ToolExecutionResult.Failure("Snapshot required for click targeting")
 
         val attempts = mutableListOf<String>()
 
-        suspend fun attempt(label: String, action: UIAction): ToolExecutionResult? {
-            val result = context.platform.performAction(action, snapshot)
+        suspend fun attempt(label: String, action: UIAction, snapshotForAction: ScreenSnapshot?): ToolExecutionResult? {
+            val result = context.platform.performAction(action, snapshotForAction)
             return when (result) {
                 is ActionResult.Success -> ToolExecutionResult.Success(
                     output = result.message,
@@ -58,7 +59,13 @@ class ClickTargetInvocation(
                     null
                 }
                 is ActionResult.ElementNotFound -> {
-                    attempts.add("$label: ${buildElementNotFoundMessage(result.elementIndex, snapshot)}")
+                    val snap = snapshotForAction
+                    val reason = if (snap != null) {
+                        buildElementNotFoundMessage(result.elementIndex, snap)
+                    } else {
+                        "Element not found: index ${result.elementIndex} (no snapshot available)"
+                    }
+                    attempts.add("$label: $reason")
                     null
                 }
                 is ActionResult.Cancelled -> ToolExecutionResult.Cancelled(result.reason)
@@ -79,48 +86,82 @@ class ClickTargetInvocation(
             val result = when (selector) {
                 is MultiSelectorTargeting.Selector.Bounds -> {
                     val (cx, cy) = selector.center()
-                    attempt(label, UIAction.ClickAt(cx, cy))
+                    attempt(
+                        label = label,
+                        action = UIAction.LongClickAt(cx, cy, durationMs),
+                        snapshotForAction = null
+                    )
                 }
                 is MultiSelectorTargeting.Selector.Point -> attempt(
-                    label,
-                    UIAction.ClickAt(selector.x, selector.y)
+                    label = label,
+                    action = UIAction.LongClickAt(selector.x, selector.y, durationMs),
+                    snapshotForAction = null
                 )
                 is MultiSelectorTargeting.Selector.ResourceId -> {
-                    val elementIndex = MultiSelectorTargeting.findElementIndexByResourceId(
-                        snapshot = snapshot,
-                        resourceId = selector.resourceId,
-                        index = selector.index
-                    )
-                    if (elementIndex == null) {
-                        val count = MultiSelectorTargeting.matchCountByResourceId(snapshot, selector.resourceId)
-                        attempts.add(
-                            "resource_id='${selector.resourceId}' index ${selector.index} out of range (found $count)"
-                        )
+                    val snap = snapshot
+                    if (snap == null) {
+                        attempts.add("$label: Snapshot required for resource_id lookup")
                         null
                     } else {
-                        attempt(label, UIAction.Click(elementIndex))
+                        val elementIndex = MultiSelectorTargeting.findElementIndexByResourceId(
+                            snapshot = snap,
+                            resourceId = selector.resourceId,
+                            index = selector.index
+                        )
+                        if (elementIndex == null) {
+                            val count = MultiSelectorTargeting.matchCountByResourceId(snap, selector.resourceId)
+                            attempts.add(
+                                "resource_id='${selector.resourceId}' index ${selector.index} out of range (found $count)"
+                            )
+                            null
+                        } else {
+                            attempt(
+                                label = label,
+                                action = UIAction.LongClick(elementIndex, durationMs),
+                                snapshotForAction = snap
+                            )
+                        }
                     }
                 }
                 is MultiSelectorTargeting.Selector.Text -> {
-                    val elementIndex = MultiSelectorTargeting.findElementIndexByTextOrDescription(
-                        snapshot = snapshot,
-                        text = selector.text,
-                        index = selector.index
-                    )
-                    if (elementIndex == null) {
-                        val count = MultiSelectorTargeting.matchCountByTextOrDescription(snapshot, selector.text)
-                        attempts.add(
-                            "text=\"${selector.text}\" index ${selector.index} out of range (found $count)"
-                        )
+                    val snap = snapshot
+                    if (snap == null) {
+                        attempts.add("$label: Snapshot required for text lookup")
                         null
                     } else {
-                        attempt(label, UIAction.Click(elementIndex))
+                        val elementIndex = MultiSelectorTargeting.findElementIndexByTextOrDescription(
+                            snapshot = snap,
+                            text = selector.text,
+                            index = selector.index
+                        )
+                        if (elementIndex == null) {
+                            val count = MultiSelectorTargeting.matchCountByTextOrDescription(snap, selector.text)
+                            attempts.add(
+                                "text=\"${selector.text}\" index ${selector.index} out of range (found $count)"
+                            )
+                            null
+                        } else {
+                            attempt(
+                                label = label,
+                                action = UIAction.LongClick(elementIndex, durationMs),
+                                snapshotForAction = snap
+                            )
+                        }
                     }
                 }
-                is MultiSelectorTargeting.Selector.ElementIndex -> attempt(
-                    label,
-                    UIAction.Click(selector.elementIndex)
-                )
+                is MultiSelectorTargeting.Selector.ElementIndex -> {
+                    val snap = snapshot
+                    if (snap == null) {
+                        attempts.add("$label: Snapshot required for element_index long press")
+                        null
+                    } else {
+                        attempt(
+                            label = label,
+                            action = UIAction.LongClick(selector.elementIndex, durationMs),
+                            snapshotForAction = snap
+                        )
+                    }
+                }
             }
 
             if (result != null) return result
@@ -131,7 +172,7 @@ class ClickTargetInvocation(
         } else {
             ""
         }
-        return ToolExecutionResult.Failure("Failed to click element.$details")
+        return ToolExecutionResult.Failure("Failed to long press element.$details")
     }
 
     private fun buildElementNotFoundMessage(index: Int, snapshot: ScreenSnapshot): String {
