@@ -73,9 +73,9 @@ class AccessibilityPlatform(
             )
         }
 
-        // Unknown package: still capture (permission dialogs, OEM quirks), but
-        // verify no BLOCKED app root is in the window stack before proceeding.
-        if (currentPkg == null && hasBlockedWindowRoot()) {
+        // Even when currentPkg itself is allowed, the window stack may contain a
+        // BLOCKED app underneath (e.g. permission dialog over a banking app).
+        if (hasBlockedWindowRoot()) {
             return ScreenSnapshot(
                 timestamp = System.currentTimeMillis(),
                 elements = emptyList(),
@@ -268,19 +268,26 @@ class AccessibilityPlatform(
                     w.type != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY &&
                         w.type != AccessibilityWindowInfo.TYPE_INPUT_METHOD
                 }
-            val hasNullRoot = eligible.any { it.root == null }
-            val roots = eligible
-                .sortedBy { it.layer }
-                .mapNotNull { it.root }
+            val collectedRoots = mutableListOf<AccessibilityNodeInfo>()
+            var hasNullRoot = false
+            for (w in eligible.sortedBy { it.layer }) {
+                val root = w.root
+                if (root != null) collectedRoots.add(root) else hasNullRoot = true
+            }
             // OEM workaround: some devices return null for AccessibilityWindowInfo.getRoot()
             // on focused windows (e.g. runtime permission dialogs) even though the tree is
             // accessible via rootInActiveWindow. Supplement with the active root when a
             // focused window has a null root.
             val finalRoots = if (hasNullRoot) {
                 val activeRoot = service.rootInActiveWindow
-                if (activeRoot != null) roots + activeRoot else roots
+                if (activeRoot != null && collectedRoots.none { it.windowId == activeRoot.windowId }) {
+                    collectedRoots + activeRoot
+                } else {
+                    activeRoot?.recycleCompat()
+                    collectedRoots
+                }
             } else {
-                roots
+                collectedRoots
             }
             WindowRoots(
                 roots = finalRoots.ifEmpty { listOfNotNull(service.rootInActiveWindow) },
@@ -401,7 +408,7 @@ class AccessibilityPlatform(
 
     /** True if any eligible window root belongs to a BLOCKED package. */
     private fun hasBlockedWindowRoot(): Boolean {
-        val windows = try { service.windows } catch (_: Exception) { return false }
+        val windows = try { service.windows } catch (_: Exception) { return true }
         if (windows.isNullOrEmpty()) return false
         return try {
             windows
