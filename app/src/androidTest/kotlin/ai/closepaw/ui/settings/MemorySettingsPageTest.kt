@@ -209,6 +209,7 @@ class MemorySettingsPageTest {
                     platformMode = PlatformMode.ACCESSIBILITY,
                     effectivePlatformMode = PlatformMode.ACCESSIBILITY,
                     appClassifier = AppClassifier(appTiers = emptyMap()),
+                    approvalMode = ai.closepaw.protocol.ApprovalMode.SMART,
                     onNavigate = {},
                     onDismiss = {},
                 )

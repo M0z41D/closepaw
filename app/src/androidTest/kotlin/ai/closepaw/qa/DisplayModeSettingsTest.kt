@@ -127,6 +127,7 @@ private fun HomeUnderTest(
             platformMode = persistedPlatformMode,
             effectivePlatformMode = effectivePlatformMode,
             appClassifier = AppClassifier(appTiers = emptyMap()),
+            approvalMode = ai.closepaw.protocol.ApprovalMode.SMART,
             onNavigate = {},
             onDismiss = {},
         )
