@@ -212,7 +212,7 @@ fun ChatScreen(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = 48.dp, y = 88.dp)
+                        .offset(x = 48.dp, y = 35.dp)
                         .size(300.dp),
                 )
             }
