@@ -62,7 +62,7 @@ internal fun PermissionsAdvancedSettingsPage(
     onClose: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        PageMastheadDrillDown(title = "Permissions & Advanced", onBack = onBack, onClose = onClose)
+        PageMastheadDrillDown(title = "System & Debug", onBack = onBack, onClose = onClose)
         Column(
             modifier = Modifier
                 .fillMaxWidth()

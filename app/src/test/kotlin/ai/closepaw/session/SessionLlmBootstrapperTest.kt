@@ -156,6 +156,7 @@ class SessionLlmBootstrapperTest {
                 openaiBaseUrl = "",
                 otherBaseUrl = "not a url",          // <- invalid
                 otherModelId = "vendor/model",
+                approvalMode = ai.closepaw.protocol.ApprovalMode.SMART,
             )
             val context = mockk<android.content.Context>(relaxed = true)
             every { context.applicationContext } returns context

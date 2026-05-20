@@ -203,6 +203,8 @@ internal fun MainActivityContent(
                     isSessionRunning = isSessionRunning,
                     memoryStore = memoryStore,
                     memoryEditGate = memoryEditGate,
+                    approvalMode = settingsState.approvalMode,
+                    onApprovalModeChange = settingsState::updateApprovalMode,
                 )
             }
         }

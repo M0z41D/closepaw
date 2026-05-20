@@ -23,6 +23,7 @@ import ai.closepaw.llm.AuthMode
 import ai.closepaw.llm.ModelCatalog
 import ai.closepaw.platform.AppManager
 import ai.closepaw.protocol.AppTier
+import ai.closepaw.protocol.ApprovalMode
 import ai.closepaw.protocol.LLMBackendType
 import ai.closepaw.protocol.PlatformMode
 import ai.closepaw.tool.AppClassifier
@@ -47,6 +48,7 @@ internal fun SettingsHomePage(
     platformMode: PlatformMode,
     effectivePlatformMode: PlatformMode?,
     appClassifier: AppClassifier,
+    approvalMode: ApprovalMode,
     onNavigate: (SettingsPage) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -79,14 +81,14 @@ internal fun SettingsHomePage(
 
             SectionHeader("Access")
             SettingsNavigationRow(
-                title = "Permissions & Advanced",
-                subtitle = permissionsSubtitle(isAccessibilityEnabled, isOverlayEnabled, debugMode),
-                onClick = { onNavigate(SettingsPage.PERMISSIONS_ADVANCED) }
+                title = "App Access",
+                subtitle = appAccessSubtitle(appClassifier, approvalMode),
+                onClick = { onNavigate(SettingsPage.APP_ACCESS) }
             )
             SettingsNavigationRow(
-                title = "App Access",
-                subtitle = appAccessSubtitle(appClassifier),
-                onClick = { onNavigate(SettingsPage.APP_ACCESS) }
+                title = "System & Debug",
+                subtitle = permissionsSubtitle(isAccessibilityEnabled, isOverlayEnabled, debugMode),
+                onClick = { onNavigate(SettingsPage.PERMISSIONS_ADVANCED) }
             )
 
             SectionHeader("About")
@@ -176,7 +178,7 @@ private fun permissionsSubtitle(
  * is in flight, render `…` rather than block.
  */
 @Composable
-private fun appAccessSubtitle(classifier: AppClassifier): String {
+private fun appAccessSubtitle(classifier: AppClassifier, approvalMode: ApprovalMode): String {
     val context = LocalContext.current
     val overrides by classifier.userOverrides.collectAsState()
     val counts by produceState<Triple<Int, Int, Int>?>(
@@ -196,5 +198,11 @@ private fun appAccessSubtitle(classifier: AppClassifier): String {
             Triple(allow, ask, reject)
         }
     }
-    return counts?.let { (a, k, r) -> "$a Allow · $k Ask · $r Reject" } ?: "…"
+    val modeLabel = when (approvalMode) {
+        ApprovalMode.SMART -> "Smart"
+        ApprovalMode.AUTO_APPROVE -> "Auto-Approve"
+        ApprovalMode.ALWAYS_ASK -> "Always Ask"
+    }
+    return counts?.let { (a, k, r) -> "$modeLabel · $a Allow · $k Ask · $r Reject" }
+        ?: "$modeLabel · …"
 }

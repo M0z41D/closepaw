@@ -404,6 +404,7 @@ class ModelCatalogRepositoryTest {
         openaiBaseUrl = "",
         otherBaseUrl = otherBaseUrl,
         otherModelId = otherModelId,
+        approvalMode = AppSettingsStore.DEFAULT_APPROVAL_MODE,
     )
 
     private fun fakeSettingsStore(

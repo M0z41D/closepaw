@@ -75,6 +75,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import ai.closepaw.protocol.ApprovalMode
 import ai.closepaw.protocol.AppTier
 import ai.closepaw.tool.AppClassifier
 import ai.closepaw.ui.theme.closePaw
@@ -114,6 +115,8 @@ internal fun AppAccessSettingsPage(
     appClassifier: AppClassifier,
     memoryStore: MemoryStore,
     gate: MemoryEditGate,
+    approvalMode: ApprovalMode = ApprovalMode.SMART,
+    onApprovalModeChange: (ApprovalMode) -> Unit = {},
     onBack: () -> Unit,
     onClose: () -> Unit,
     contentIndex: AppAccessContentIndex? = null,
@@ -277,6 +280,10 @@ internal fun AppAccessSettingsPage(
                 .padding(horizontal = MaterialTheme.closePaw.spacing.lg),
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.closePaw.spacing.md),
         ) {
+            ApprovalModeSelector(
+                selected = approvalMode,
+                onSelect = onApprovalModeChange,
+            )
             SearchField(query = query, onQueryChange = { query = it })
             FilterChipsRow(selected = filter, onSelect = { filter = it })
         }
@@ -380,6 +387,66 @@ private fun FilterChipsRow(selected: AppFilter, onSelect: (AppFilter) -> Unit) {
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+    }
+}
+
+private data class ApprovalModeOption(
+    val mode: ApprovalMode,
+    val label: String,
+    val description: String,
+)
+
+private val APPROVAL_MODE_OPTIONS = listOf(
+    ApprovalModeOption(
+        mode = ApprovalMode.SMART,
+        label = "Smart",
+        description = "Auto-approve safe actions, ask for risky ones",
+    ),
+    ApprovalModeOption(
+        mode = ApprovalMode.AUTO_APPROVE,
+        label = "Auto-Approve",
+        description = "Run all actions without asking",
+    ),
+)
+
+@Composable
+private fun ApprovalModeSelector(
+    selected: ApprovalMode,
+    onSelect: (ApprovalMode) -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Column(modifier = Modifier.padding(MaterialTheme.closePaw.spacing.cardPadding)) {
+            Text(
+                text = "Approval Mode",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                APPROVAL_MODE_OPTIONS.forEach { option ->
+                    SegmentChip(
+                        label = option.label,
+                        isSelected = selected == option.mode,
+                        onClick = { onSelect(option.mode) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            val desc = APPROVAL_MODE_OPTIONS.find { it.mode == selected }?.description ?: ""
+            Text(
+                text = desc,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.closePaw.inkFaint,
+            )
         }
     }
 }

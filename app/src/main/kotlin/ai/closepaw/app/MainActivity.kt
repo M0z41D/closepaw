@@ -711,7 +711,7 @@ class MainActivity : ComponentActivity() {
 
         val sessionConfig =
                 SessionConfig(
-                        approvalMode = pendingApprovalMode ?: ApprovalMode.SMART,
+                        approvalMode = pendingApprovalMode ?: settingsState.approvalMode,
                         mainModel = settingsState.selectedModel,
                         debugMode = settingsState.debugMode,
                         traceEnabled = pendingTraceEnabled ?: settingsState.traceEnabled,

@@ -139,6 +139,7 @@ class SessionServicesProviderRoutingTest {
         openaiBaseUrl = "",
         otherBaseUrl = "",
         otherModelId = "",
+        approvalMode = ai.closepaw.app.AppSettingsStore.DEFAULT_APPROVAL_MODE,
     )
     val repo = ModelCatalogRepository(
         context = context,

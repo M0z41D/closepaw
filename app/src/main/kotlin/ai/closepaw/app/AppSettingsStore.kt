@@ -1,6 +1,7 @@
 package ai.closepaw.app
 
 import android.content.Context
+import ai.closepaw.protocol.ApprovalMode
 import ai.closepaw.protocol.AppTier
 import ai.closepaw.protocol.LLMBackendType
 import ai.closepaw.protocol.PlatformMode
@@ -29,6 +30,7 @@ data class AppSettings(
         val openaiBaseUrl: String,
         val otherBaseUrl: String,
         val otherModelId: String,
+        val approvalMode: ApprovalMode,
 )
 
 class AppSettingsStore(private val context: Context) {
@@ -50,6 +52,7 @@ class AppSettingsStore(private val context: Context) {
         private const val KEY_OTHER_BASE_URL = "other_base_url"
         private const val KEY_OTHER_MODEL_ID = "other_model_id"
         private const val KEY_DISABLED_AGENT_SKILLS = "disabled_agent_skills"
+        private const val KEY_APPROVAL_MODE = "approval_mode"
 
         const val DEFAULT_MODEL = "glm-5"
         const val DEFAULT_DEBUG_MODE = false
@@ -60,6 +63,7 @@ class AppSettingsStore(private val context: Context) {
         const val DEFAULT_TRACE_ENABLED = false
         const val DEFAULT_BROWSER_SCRIPT_ENABLED = false
         const val DEFAULT_TERMUX_SHELL_ENABLED = true
+        val DEFAULT_APPROVAL_MODE = ApprovalMode.SMART
     }
 
     private val _termuxShellEnabled = MutableStateFlow(loadTermuxShellEnabled())
@@ -119,6 +123,13 @@ class AppSettingsStore(private val context: Context) {
         val openaiBaseUrl = prefs.getString(KEY_OPENAI_BASE_URL, "") ?: ""
         val otherBaseUrl = prefs.getString(KEY_OTHER_BASE_URL, "") ?: ""
         val otherModelId = prefs.getString(KEY_OTHER_MODEL_ID, "") ?: ""
+        val approvalModeName = prefs.getString(KEY_APPROVAL_MODE, DEFAULT_APPROVAL_MODE.name)
+                ?: DEFAULT_APPROVAL_MODE.name
+        val approvalMode = try {
+            ApprovalMode.valueOf(approvalModeName)
+        } catch (_: Exception) {
+            DEFAULT_APPROVAL_MODE
+        }
 
         return AppSettings(
                 selectedModel = selectedModel,
@@ -133,6 +144,7 @@ class AppSettingsStore(private val context: Context) {
                 openaiBaseUrl = openaiBaseUrl,
                 otherBaseUrl = otherBaseUrl,
                 otherModelId = otherModelId,
+                approvalMode = approvalMode,
         )
     }
 
@@ -208,6 +220,10 @@ class AppSettingsStore(private val context: Context) {
 
     fun savePlatformMode(value: PlatformMode) {
         prefs().edit().putString(KEY_PLATFORM_MODE, value.name).apply()
+    }
+
+    fun saveApprovalMode(value: ApprovalMode) {
+        prefs().edit().putString(KEY_APPROVAL_MODE, value.name).apply()
     }
 
     fun saveLocalModel(model: LocalModelOption) {

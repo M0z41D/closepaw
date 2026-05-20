@@ -29,6 +29,7 @@ import ai.closepaw.llm.AuthMode
 import ai.closepaw.llm.LLMProvider
 import ai.closepaw.llm.ModelCatalog
 import ai.closepaw.memory.MemoryStore
+import ai.closepaw.protocol.ApprovalMode
 import ai.closepaw.protocol.LLMBackendType
 import ai.closepaw.protocol.PlatformMode
 import ai.closepaw.tool.AppClassifier
@@ -88,6 +89,8 @@ fun SettingsSheet(
     isSessionRunning: Boolean = false,
     memoryStore: MemoryStore,
     memoryEditGate: MemoryEditGate,
+    approvalMode: ApprovalMode = ApprovalMode.SMART,
+    onApprovalModeChange: (ApprovalMode) -> Unit = {},
 ) {
     var settingsPage by rememberSaveable(initialPage) { mutableStateOf(initialPage) }
     val reducedMotion = ClosePawMotion.reducedMotion()
@@ -148,6 +151,7 @@ fun SettingsSheet(
                         platformMode = platformMode,
                         effectivePlatformMode = effectivePlatformMode,
                         appClassifier = appClassifier,
+                        approvalMode = approvalMode,
                         onNavigate = { settingsPage = it },
                         onDismiss = onDismiss
                     )
@@ -207,6 +211,8 @@ fun SettingsSheet(
                         appClassifier = appClassifier,
                         memoryStore = memoryStore,
                         gate = memoryEditGate,
+                        approvalMode = approvalMode,
+                        onApprovalModeChange = onApprovalModeChange,
                         onBack = { settingsPage = SettingsPage.HOME },
                         onClose = onDismiss,
                     )

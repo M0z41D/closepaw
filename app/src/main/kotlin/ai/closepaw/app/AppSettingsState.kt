@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import ai.closepaw.llm.ModelCatalogRepositoryHolder
+import ai.closepaw.protocol.ApprovalMode
 import ai.closepaw.protocol.LLMBackendType
 import ai.closepaw.protocol.PlatformMode
 import ai.closepaw.ui.settings.LocalModelOption
@@ -57,6 +58,8 @@ class AppSettingsState(
         private set
     var browserScriptEnabled by mutableStateOf(AppSettingsStore.DEFAULT_BROWSER_SCRIPT_ENABLED)
         private set
+    var approvalMode by mutableStateOf(AppSettingsStore.DEFAULT_APPROVAL_MODE)
+        private set
 
     /** Base URL override for OPENAI provider (set from intent / Settings; persisted). */
     var openaiBaseUrl by mutableStateOf("")
@@ -83,6 +86,7 @@ class AppSettingsState(
         openaiBaseUrl = settings.openaiBaseUrl
         otherBaseUrl = settings.otherBaseUrl
         otherModelId = settings.otherModelId
+        approvalMode = settings.approvalMode
 
         Log.d(
                 TAG,
@@ -145,5 +149,10 @@ class AppSettingsState(
     fun updatePlatformMode(value: PlatformMode) {
         platformMode = value
         store.savePlatformMode(value)
+    }
+
+    fun updateApprovalMode(value: ApprovalMode) {
+        approvalMode = value
+        store.saveApprovalMode(value)
     }
 }
