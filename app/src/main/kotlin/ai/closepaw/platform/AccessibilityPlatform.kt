@@ -65,7 +65,17 @@ class AccessibilityPlatform(
         val currentPkg = getCurrentPackageName()
 
         // Privacy gate: BLOCKED apps get masked snapshot — no artifacts created
-        if (currentPkg != null && isPackageBlocked(currentPkg)) {
+        if (isPackageBlocked(currentPkg)) {
+            return ScreenSnapshot(
+                timestamp = System.currentTimeMillis(),
+                elements = emptyList(),
+                image = null
+            )
+        }
+
+        // Unknown package: still capture (permission dialogs, OEM quirks), but
+        // verify no BLOCKED app root is in the window stack before proceeding.
+        if (currentPkg == null && hasBlockedWindowRoot()) {
             return ScreenSnapshot(
                 timestamp = System.currentTimeMillis(),
                 elements = emptyList(),
@@ -374,6 +384,29 @@ class AccessibilityPlatform(
         } catch (e: Exception) {
             Log.w(TAG, "Failed to get package name", e)
             null
+        }
+    }
+
+    /** True if any eligible window root belongs to a BLOCKED package. */
+    private fun hasBlockedWindowRoot(): Boolean {
+        val windows = try { service.windows } catch (_: Exception) { return false }
+        if (windows.isNullOrEmpty()) return false
+        return try {
+            windows
+                .filter { w ->
+                    w.type != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY &&
+                        w.type != AccessibilityWindowInfo.TYPE_INPUT_METHOD
+                }
+                .any { w ->
+                    val root = w.root ?: return@any false
+                    val pkg = try { root.packageName?.toString() } finally { root.recycleCompat() }
+                    pkg != null && isPackageBlocked(pkg)
+                }
+        } finally {
+            windows.forEach { w ->
+                runCatching { w.recycle() }
+                    .onFailure { err -> Log.w(TAG, "Window recycle failed (ignored)", err) }
+            }
         }
     }
 
