@@ -263,15 +263,27 @@ class AccessibilityPlatform(
         }
         return try {
             val keyboardVisible = windows.any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
-            val roots = windows
+            val eligible = windows
                 .filter { w ->
                     w.type != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY &&
                         w.type != AccessibilityWindowInfo.TYPE_INPUT_METHOD
                 }
+            val hasNullRoot = eligible.any { it.root == null }
+            val roots = eligible
                 .sortedBy { it.layer }
                 .mapNotNull { it.root }
+            // OEM workaround: some devices return null for AccessibilityWindowInfo.getRoot()
+            // on focused windows (e.g. runtime permission dialogs) even though the tree is
+            // accessible via rootInActiveWindow. Supplement with the active root when a
+            // focused window has a null root.
+            val finalRoots = if (hasNullRoot) {
+                val activeRoot = service.rootInActiveWindow
+                if (activeRoot != null) roots + activeRoot else roots
+            } else {
+                roots
+            }
             WindowRoots(
-                roots = roots.ifEmpty { listOfNotNull(service.rootInActiveWindow) },
+                roots = finalRoots.ifEmpty { listOfNotNull(service.rootInActiveWindow) },
                 keyboardVisible = keyboardVisible
             )
         } finally {
