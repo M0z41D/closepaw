@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-05-20: Permission dialog a11y fix — agent no longer exits on system dialogs
+
+**What changed:**
+- Added `com.google.android.permissioncontroller` and `com.android.permissioncontroller` to bundled tiers as `NORMAL` — SMART mode no longer blocks actions on permission dialogs
+- Removed null-package kill switch in `captureScreen()` — agent captures a11y tree even when `getCurrentPackageName()` returns null (OEM quirk, window transitions)
+- Moved `wait` tool from `isScreenChanging=true` to `false` — wait doesn't mutate the screen and shouldn't trigger policy gate
+- Added `hasBlockedWindowRoot()` — scans all eligible window roots unconditionally; if any root belongs to a BLOCKED app (even under a NORMAL foreground), capture returns masked snapshot
+- Added OEM fallback in `getCurrentPackageName()` — scans remaining windows when top root has null packageName
+- Added `rootInActiveWindow` fallback in `collectRootsOnActiveDisplay()` — supplements roots when OEM returns null for `window.getRoot()` on focused windows; deduplicated by windowId
+- Single-pass root collection eliminates AccessibilityNodeInfo leak from double `getRoot()` calls
+- `hasBlockedWindowRoot()` fails closed when `service.windows` throws
+
+**Why:**
+- User reported agent exiting immediately when Uber/Maps showed "Allow location?" dialog
+- Root cause: permissioncontroller classified as CAUTIOUS → SMART mode required approval → approval UI blocked by system dialog → 60s timeout → agent exit
+- Secondary issues: null-package empty snapshot on OEM devices, wait tool blocked by policy, AccessibilityNodeInfo leak
+- Android 16 (API 36) platform change: hides permission dialog content from AccessibilityService entirely (both getRoot() and rootInActiveWindow return null). Works on API ≤ 35.
+
+**Key files:** `AccessibilityPlatform.kt`, `ToolName.kt`, `app_tiers.json`
+**Verification:** AOSP emulator API 33 (GOAL_ACHIEVED, 10-13 turns), AOSP emulator API 36 (permission dialog invisible — platform limitation), Nubia real device API 36 (platform limitation confirmed). Codex review x2.
+**Commit:** `ad53cae9..649473ad` (4 commits)
+**Next:** Android 16 permission dialog access via Shizuku/UiAutomation bridge or hybrid perception mode
+**Blockers:** None for API ≤ 35. API 36+ requires Shizuku or screenshot-based interaction.
+
 ## 2026-05-18: Paw mark — stroke bump, hero variant, EmptyState background, capsule unification, visualizer scope
 
 **What changed:**

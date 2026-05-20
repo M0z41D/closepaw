@@ -205,7 +205,9 @@ Before snapshots reach any downstream consumer, `AppClassifier.maskIfBlocked()` 
 1. **Pre-turn** (`AgentTurnRunner.capturePreTurnSnapshot`) — prevents the LLM from seeing BLOCKED app content
 2. **Post-action** (`TurnExecutionPhaseRunner.captureObservationWithSnapshot`) — prevents observation leaks after tool execution
 
-The Perceptor itself is unaware of security tiers; masking happens in the turn pipeline layer above it.
+Additionally, `AccessibilityPlatform.captureScreen()` performs its own privacy gate before any tree/screenshot capture: it checks `isPackageBlocked(currentPkg)` and also calls `hasBlockedWindowRoot()` to scan all eligible window roots. If any root in the window stack belongs to a BLOCKED app (even underneath a NORMAL foreground like a permission dialog), capture returns a masked snapshot. This prevents content leak in multi-window scenarios.
+
+The Perceptor itself is unaware of security tiers; masking happens in the turn pipeline and capture layers above it.
 
 ---
 

@@ -80,7 +80,7 @@ Decision inputs: `(toolName, params, packageName, destinationPackage?) → Polic
 
 Decision flow:
 
-1. **Non-screen-changing tools** (scratchpad, write_todos, remember_experience, complete_task, ask_user, shell, termux_shell) → always `Allow`
+1. **Non-screen-changing tools** (scratchpad, write_todos, remember_experience, complete_task, ask_user, shell, termux_shell, wait) → always `Allow`
 2. **Escape actions** (system_button back/home) → always `Allow` (agent must not be trapped in a blocked app)
 3. **BLOCKED app** → always `Deny`, even in `AUTO_APPROVE` mode (absolute floor)
 4. **`browser_script` special rule** → after the BLOCKED-app floor and before user allow-lists,
@@ -118,11 +118,11 @@ Classifies Android packages into security tiers.
 |------|---------|---------|
 | `BLOCKED` | Financial/auth apps — screen masked, all actions denied | Chase, PayPal, authenticators, crypto wallets |
 | `CAUTIOUS` | Unknown/unclassified apps — actions require approval in SMART mode | Any app not in `app_tiers.json` |
-| `NORMAL` | Known safe apps — actions auto-approved in SMART mode | Settings, Photos, Calendar, Clock |
+| `NORMAL` | Known safe apps — actions auto-approved in SMART mode | Settings, Photos, Calendar, Clock, permissioncontroller |
 
-**Configuration:** `assets/security/app_tiers.json` defines the base tier map. User overrides can only **tighten** (NORMAL→CAUTIOUS/BLOCKED, CAUTIOUS→BLOCKED), never loosen.
+**Configuration:** `assets/security/app_tiers.json` defines the base tier map. Includes `com.google.android.permissioncontroller` and `com.android.permissioncontroller` as `NORMAL` so the agent can interact with system permission dialogs without approval in SMART mode. User overrides can only **tighten** (NORMAL→CAUTIOUS/BLOCKED, CAUTIOUS→BLOCKED), never loosen.
 
-**Masking:** `AppClassifier.maskIfBlocked(snapshot, pkg)` returns an empty snapshot (no elements, no image) for BLOCKED packages. Called at three points to prevent BLOCKED app content from reaching the LLM: (1) pre-turn capture, (2) post-action observation building (threaded via `appClassifier` parameter through all executors and `PostActionAnalysis`), and (3) capture-layer artifact gating. The capture layer (AccessibilityPlatform/VirtualDisplayPlatform) gates on package tier **before** writing any trace artifacts — if package is BLOCKED or unknown (null), no screenshots or tree artifacts are written.
+**Masking:** `AppClassifier.maskIfBlocked(snapshot, pkg)` returns an empty snapshot (no elements, no image) for BLOCKED packages. Called at three points to prevent BLOCKED app content from reaching the LLM: (1) pre-turn capture, (2) post-action observation building (threaded via `appClassifier` parameter through all executors and `PostActionAnalysis`), and (3) capture-layer artifact gating. The capture layer (AccessibilityPlatform/VirtualDisplayPlatform) gates on package tier **before** writing any trace artifacts — if package is BLOCKED, no screenshots or tree artifacts are written. Additionally, `AccessibilityPlatform.hasBlockedWindowRoot()` scans all eligible window roots unconditionally: even when the foreground package is NORMAL (e.g. a permission dialog), if any window root in the stack belongs to a BLOCKED app, capture returns a masked snapshot.
 
 **Fail-closed:** `fromAssets()` throws `IllegalStateException` if `app_tiers.json` is missing, corrupt, or contains unknown tier strings. Session cannot start without a valid classifier.
 

@@ -76,7 +76,9 @@ During `dispatchGesture`, the overlay must become pass-through. `OverlayTouchGat
 
 ### Window Selection
 
-`collectRootsOnActiveDisplay()` collects all non-overlay/non-IME windows sorted by layer ascending. `getCurrentPackageName()` uses the topmost (highest-layer) `TYPE_APPLICATION` window — aligned with the VD platform's `getRootOnDisplay()`. Screenshot targets the topmost window ID.
+`collectRootsOnActiveDisplay()` collects all non-overlay/non-IME windows sorted by layer ascending in a single pass: each window's `getRoot()` is called exactly once, and null roots are tracked. When a focused window has a null root (OEM quirk on some devices), `rootInActiveWindow` is appended as a fallback — deduplicated by `windowId` to prevent duplicate trees. `getCurrentPackageName()` uses the topmost (highest-layer) `TYPE_APPLICATION` window, with a fallback scan of remaining windows if the top root's packageName is null. Screenshot targets the topmost window ID.
+
+**Android 16 (API 36) limitation:** On AOSP API 36+, the platform hides runtime permission dialog content from `AccessibilityService` — both `AccessibilityWindowInfo.getRoot()` and `rootInActiveWindow` return null. The dialog window appears in the window list but its tree is inaccessible. This is a platform security measure, not a ClosePaw bug. On API ≤ 35, permission dialogs are fully accessible.
 
 ---
 
