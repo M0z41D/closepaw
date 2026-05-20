@@ -64,17 +64,8 @@ class AccessibilityPlatform(
     override suspend fun captureScreen(): ScreenSnapshot {
         val currentPkg = getCurrentPackageName()
 
-        // Null package = unknown foreground app — skip capture to avoid leaking artifacts
-        if (currentPkg == null) {
-            return ScreenSnapshot(
-                timestamp = System.currentTimeMillis(),
-                elements = emptyList(),
-                image = null
-            )
-        }
-
         // Privacy gate: BLOCKED apps get masked snapshot — no artifacts created
-        if (isPackageBlocked(currentPkg)) {
+        if (currentPkg != null && isPackageBlocked(currentPkg)) {
             return ScreenSnapshot(
                 timestamp = System.currentTimeMillis(),
                 elements = emptyList(),
@@ -359,8 +350,21 @@ class AccessibilityPlatform(
                 val topWindow =
                     eligible.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
                         ?: eligible.firstOrNull()
-                val root = topWindow?.root ?: return null
-                try { root.packageName?.toString() } finally { root.recycleCompat() }
+                val root = topWindow?.root
+                val topPkg = root?.let {
+                    try { it.packageName?.toString() } finally { it.recycleCompat() }
+                }
+                if (topPkg != null) return topPkg
+
+                // OEM fallback: top window root had null packageName (e.g. some permission
+                // dialogs). Scan remaining eligible windows for a usable packageName.
+                for (w in eligible) {
+                    if (w === topWindow) continue
+                    val r = w.root ?: continue
+                    val pkg = try { r.packageName?.toString() } finally { r.recycleCompat() }
+                    if (pkg != null) return pkg
+                }
+                return null
             } finally {
                 windows.forEach { w ->
                     runCatching { w.recycle() }
