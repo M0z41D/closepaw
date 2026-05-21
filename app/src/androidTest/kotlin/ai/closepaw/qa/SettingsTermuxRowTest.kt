@@ -110,6 +110,9 @@ class SettingsTermuxRowTest {
                         onPlatformModeChange = {},
                         browserScriptEnabled = false,
                         onBrowserScriptEnabledChange = {},
+                        approvalMode = ai.closepaw.protocol.ApprovalMode.SMART,
+                        onApprovalModeChange = {},
+                        onNavigateToAppAccess = {},
                         onBack = {},
                         onClose = {},
                     )

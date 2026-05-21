@@ -70,7 +70,7 @@ internal fun SettingsHomePage(
             )
             SettingsNavigationRow(
                 title = "Agent Behavior",
-                subtitle = agentBehaviorSubtitle(perceptionMode, platformMode, effectivePlatformMode),
+                subtitle = agentBehaviorSubtitle(perceptionMode, platformMode, effectivePlatformMode, approvalMode),
                 onClick = { onNavigate(SettingsPage.AGENT_BEHAVIOR) }
             )
             SettingsNavigationRow(
@@ -136,7 +136,13 @@ private fun agentBehaviorSubtitle(
     perceptionMode: String,
     platformMode: PlatformMode,
     effectivePlatformMode: PlatformMode?,
+    approvalMode: ApprovalMode,
 ): String {
+    val approvalChip = when (approvalMode) {
+        ApprovalMode.SMART -> "Per-App"
+        ApprovalMode.AUTO_APPROVE -> "Auto-Approve"
+        ApprovalMode.ALWAYS_ASK -> "Always Ask"
+    }
     val perceptionChip = when (perceptionMode) {
         "hybrid" -> "Transcript + Image"
         "screenshot_only" -> "Image"
@@ -144,15 +150,15 @@ private fun agentBehaviorSubtitle(
     }
     val displayChip = when (platformMode) {
         PlatformMode.ACCESSIBILITY -> when (effectivePlatformMode) {
-            PlatformMode.VIRTUAL_DISPLAY -> " · VD (this session)"
+            PlatformMode.VIRTUAL_DISPLAY -> " · Virtual Display (this session)"
             else -> ""
         }
         PlatformMode.VIRTUAL_DISPLAY -> when (effectivePlatformMode) {
-            PlatformMode.ACCESSIBILITY -> " · VD (next session)"
-            else -> " · VD"
+            PlatformMode.ACCESSIBILITY -> " · Virtual Display (next session)"
+            else -> " · Virtual Display"
         }
     }
-    return "$perceptionChip$displayChip"
+    return "$approvalChip · $perceptionChip$displayChip"
 }
 
 private fun permissionsSubtitle(
@@ -199,7 +205,7 @@ private fun appAccessSubtitle(classifier: AppClassifier, approvalMode: ApprovalM
         }
     }
     val modeLabel = when (approvalMode) {
-        ApprovalMode.SMART -> "Smart"
+        ApprovalMode.SMART -> "Per-App"
         ApprovalMode.AUTO_APPROVE -> "Auto-Approve"
         ApprovalMode.ALWAYS_ASK -> "Always Ask"
     }

@@ -185,6 +185,9 @@ fun SettingsSheet(
                         onPlatformModeChange = onPlatformModeChange,
                         browserScriptEnabled = browserScriptEnabled,
                         onBrowserScriptEnabledChange = onBrowserScriptEnabledChange,
+                        approvalMode = approvalMode,
+                        onApprovalModeChange = onApprovalModeChange,
+                        onNavigateToAppAccess = { settingsPage = SettingsPage.APP_ACCESS },
                         onBack = { settingsPage = SettingsPage.HOME },
                         onClose = onDismiss,
                         isSessionRunning = isSessionRunning,
@@ -212,7 +215,6 @@ fun SettingsSheet(
                         memoryStore = memoryStore,
                         gate = memoryEditGate,
                         approvalMode = approvalMode,
-                        onApprovalModeChange = onApprovalModeChange,
                         onBack = { settingsPage = SettingsPage.HOME },
                         onClose = onDismiss,
                     )

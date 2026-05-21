@@ -16,7 +16,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -291,30 +290,6 @@ internal fun PerceptionModeSelector(
         shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(vertical = MaterialTheme.closePaw.spacing.sm)) {
-            Row(
-                modifier = Modifier.padding(horizontal = MaterialTheme.closePaw.spacing.cardPadding, vertical = MaterialTheme.closePaw.spacing.sm),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Image,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Perception Mode",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = "How the agent sees the screen",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
             Column(modifier = Modifier.selectableGroup()) {
                 options.forEach { option ->
                     val isSelected = selectedMode == option.value
