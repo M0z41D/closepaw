@@ -253,7 +253,7 @@ private fun DataStorageSection(
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
-                                text = "Record detailed execution traces",
+                                text = "Save step-by-step session logs",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -275,7 +275,7 @@ private fun DataStorageSection(
                             shape = MaterialTheme.shapes.small
                         ) {
                             Text(
-                                text = "Traces may contain sensitive data (screenshots, inputs, LLM responses). Disable when not debugging.",
+                                text = "Traces may include screenshots and inputs. Turn off when done.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 modifier = Modifier.padding(horizontal = MaterialTheme.closePaw.spacing.md, vertical = MaterialTheme.closePaw.spacing.sm)

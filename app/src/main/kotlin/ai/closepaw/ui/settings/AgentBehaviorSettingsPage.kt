@@ -82,12 +82,12 @@ private val APPROVAL_MODE_OPTIONS = listOf(
     ApprovalModeOption(
         mode = ApprovalMode.SMART,
         label = "Per-App",
-        description = "Auto-approve safe actions, ask for risky ones based on per-app tiers",
+        description = "Ask before risky actions, based on each app's tier",
     ),
     ApprovalModeOption(
         mode = ApprovalMode.AUTO_APPROVE,
         label = "Auto-Approve",
-        description = "Run all actions without asking",
+        description = "Execute all actions immediately",
     ),
 )
 
@@ -124,15 +124,15 @@ private fun ApprovalSection(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.closePaw.inkFaint,
                 )
+                if (approvalMode == ApprovalMode.SMART) {
+                    Spacer(modifier = Modifier.height(MaterialTheme.closePaw.spacing.md))
+                    SettingsNavigationRow(
+                        title = "App Access Tiers",
+                        subtitle = "Set allow, ask, or reject per app",
+                        onClick = onNavigateToAppAccess,
+                    )
+                }
             }
-        }
-        if (approvalMode == ApprovalMode.SMART) {
-            Spacer(modifier = Modifier.height(MaterialTheme.closePaw.spacing.md))
-            SettingsNavigationRow(
-                title = "Configure App Access",
-                subtitle = "Set per-app allow, ask, or reject tiers",
-                onClick = onNavigateToAppAccess,
-            )
         }
     }
 }

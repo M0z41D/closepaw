@@ -75,7 +75,7 @@ internal fun SettingsHomePage(
             )
             SettingsNavigationRow(
                 title = "Memory",
-                subtitle = "User and Device memory files",
+                subtitle = "User and device knowledge",
                 onClick = { onNavigate(SettingsPage.MEMORY) }
             )
 

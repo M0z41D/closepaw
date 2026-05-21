@@ -267,18 +267,18 @@ internal fun PerceptionModeSelector(
         PerceptionOption(
             value = "accessibility_only",
             label = "Screen Transcript",
-            subtitle = "Reads on-screen text and structure. Fastest, lowest cost, and works for most apps.",
+            subtitle = "Reads text and layout. Fast, cheap, works for most apps.",
             recommended = true,
         ),
         PerceptionOption(
             value = "screenshot_only",
             label = "Screen Image",
-            subtitle = "Looks at screenshots only. Slower and higher cost; use for maps, canvas, games, or apps that hide their structure.",
+            subtitle = "Reads screenshots only. Slower; best for maps, canvas, or visual apps.",
         ),
         PerceptionOption(
             value = "hybrid",
             label = "Transcript + Image",
-            subtitle = "Combines both. Most reliable for tricky apps; slowest and highest cost.",
+            subtitle = "Text + screenshots. Most reliable but slowest.",
         ),
     )
 
