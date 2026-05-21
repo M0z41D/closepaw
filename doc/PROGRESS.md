@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-05-20: Approval mode selector, settings reorder & copy audit
+
+**What changed:**
+- Added approval mode UI: Per-App / Auto-Approve `SegmentChip` selector in Agent Behavior page, persisted via `AppSettingsStore.approval_mode`
+- Cross-page hints: Auto-Approve warning banner in App Access; "App Access Rules" navigation link in the approval card when Per-App is selected
+- Reordered settings HOME: App Access before System & Debug (renamed from "Permissions & Advanced")
+- Navigation drawer icon: `Icons.Outlined.Settings` → `Lucide.SlidersHorizontal`
+- Copy audit across all settings pages: "VD" → "Virtual Display", removed redundant "Perception Mode" header, tightened perception descriptions, trace copy clarified
+- `ALWAYS_ASK` enum normalized to `SMART` on load (no UI chip exists for it)
+- `SegmentChip` visibility changed from `private` to `internal` for cross-file reuse
+
+**Why:**
+- Users had no way to switch between approval modes from the UI — it was only settable via debug intent extras
+- "Permissions & Advanced" was misleading; "Smart" mode label didn't convey per-app behavior
+- Codex review identified: Auto-Approve copy overstated scope (PolicyEngine still blocks BLOCKED apps), ALWAYS_ASK edge case had blank description, "tier" was dev jargon in user copy
+
+**Key files:** `AgentBehaviorSettingsPage.kt`, `AppAccessSettingsPage.kt`, `SettingsHomePage.kt`, `SettingsSheet.kt`, `SettingsWidgets.kt`, `PermissionsAdvancedSettingsPage.kt`, `AppSettingsStore.kt`, `AppSettingsState.kt`, `MainActivity.kt`, `MainActivityContent.kt`, `NavigationDrawer.kt`
+**Verification:** `./gradlew test` passed (JVM + androidTest). QA on emulator: AUTO_APPROVE → PolicyEngine logged `Allow` for CAUTIOUS app (Clock); SMART → PolicyEngine logged `AskUser` for same app. Codex review ×2 aligned.
+**Commit:** `b0175bf9..79f3f20e` (5 commits)
+**Next:** None queued.
+**Blockers:** None.
+
 ## 2026-05-20: Permission dialog a11y fix — agent no longer exits on system dialogs
 
 **What changed:**
