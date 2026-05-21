@@ -281,7 +281,7 @@ internal fun AppAccessSettingsPage(
         ) {
             if (approvalMode == ApprovalMode.AUTO_APPROVE) {
                 SettingsAlertCard(
-                    message = "Auto-Approve is on. These tiers only take effect in Per-App mode.",
+                    message = "Auto-Approve is on. Per-app rules below only apply in Per-App mode.",
                     tone = AlertTone.Warning,
                 )
             }

@@ -126,7 +126,8 @@ class AppSettingsStore(private val context: Context) {
         val approvalModeName = prefs.getString(KEY_APPROVAL_MODE, DEFAULT_APPROVAL_MODE.name)
                 ?: DEFAULT_APPROVAL_MODE.name
         val approvalMode = try {
-            ApprovalMode.valueOf(approvalModeName)
+            val parsed = ApprovalMode.valueOf(approvalModeName)
+            if (parsed == ApprovalMode.ALWAYS_ASK) DEFAULT_APPROVAL_MODE else parsed
         } catch (_: Exception) {
             DEFAULT_APPROVAL_MODE
         }

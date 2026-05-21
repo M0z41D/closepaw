@@ -82,12 +82,12 @@ private val APPROVAL_MODE_OPTIONS = listOf(
     ApprovalModeOption(
         mode = ApprovalMode.SMART,
         label = "Per-App",
-        description = "Ask before risky actions, based on each app's tier",
+        description = "Ask before risky actions, based on each app's access rules",
     ),
     ApprovalModeOption(
         mode = ApprovalMode.AUTO_APPROVE,
         label = "Auto-Approve",
-        description = "Execute all actions immediately",
+        description = "Run allowed actions without asking. Rejected apps stay blocked.",
     ),
 )
 
@@ -127,8 +127,8 @@ private fun ApprovalSection(
                 if (approvalMode == ApprovalMode.SMART) {
                     Spacer(modifier = Modifier.height(MaterialTheme.closePaw.spacing.md))
                     SettingsNavigationRow(
-                        title = "App Access Tiers",
-                        subtitle = "Set allow, ask, or reject per app",
+                        title = "App Access Rules",
+                        subtitle = "Set allow, ask, or reject for each app",
                         onClick = onNavigateToAppAccess,
                     )
                 }
