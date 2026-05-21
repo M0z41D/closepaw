@@ -816,7 +816,7 @@ private fun permissionStepCopy(step: WizardStep): PermissionCopy = when (step) {
         ctaLabel = "Open Accessibility Settings",
         extendedDescription = "Active only when you start a task — ClosePaw does not run in the background or " +
             "monitor other apps. Screen content read during a task is sent to the LLM provider you chose " +
-            "(e.g. OpenAI, Anthropic) so the agent can pick the next step."
+            "(e.g. OpenAI, Anthropic) so the agent can pick the next step. See our Privacy Policy: https://imoonkey.github.io/closepaw/privacy/"
     )
     WizardStep.Overlay -> PermissionCopy(
         icon = Icons.Outlined.Layers,

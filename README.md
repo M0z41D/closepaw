@@ -17,7 +17,7 @@ ClosePaw is an AI-powered Android agent — give natural language instructions, 
 
 - Natural-language task execution on Android (e.g. "Open Settings and turn on Bluetooth")
 - Screen perception via the Android accessibility service — no rooting, no screen scraping hacks
-- Multiple LLM backends: OpenAI, OpenRouter, Novita, plus on-device models via Liquid AI's Leap SDK
+- Multiple LLM backends: OpenAI, OpenRouter, Novita
 - **Smart Capsule** — a floating overlay that lets you launch and watch tasks without leaving your current app
 - ReAct-style agent loop with optional `delegate_task` subagent delegation, todo + scratchpad context hygiene, and cross-session memory
 
@@ -26,7 +26,7 @@ ClosePaw is an AI-powered Android agent — give natural language instructions, 
 ### Prerequisites
 
 - Android device or emulator running **API 31+** (Android 12 or later)
-- One of: an **OpenAI**, **OpenRouter**, or **Novita** API key (or use a bundled on-device model)
+- An **OpenAI**, **OpenRouter**, or **Novita** API key
 - JDK 17 and the Android SDK if you're building from source
 
 ### Build & Install
@@ -40,7 +40,7 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 
 ### Setup
 
-1. Open the app → **Settings** → enter your API key (or pick an on-device model)
+1. Open the app → **Settings** → enter your API key
 2. **Settings → Accessibility** in Android system settings → enable the ClosePaw accessibility service
 3. Grant the **Display over other apps** (overlay) permission when prompted
 4. Type a task in the home screen (or summon the Smart Capsule from any app) and go
@@ -50,11 +50,13 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 High-level layers:
 
 - **Agent loop** — ReAct turn engine, optional `delegate_task` subagent delegation, todo + scratchpad state, cross-session memory
-- **Tools** — accessibility actions, browser scripting, on-device perception, optional Termux shell bridge
+- **Tools** — accessibility actions, browser scripting, optional Termux shell bridge
 - **Platforms** — `AccessibilityPlatform` for normal use, `VirtualDisplayPlatform` (Shizuku) for hybrid background sessions
-- **LLM** — pluggable clients (OpenAI / OpenRouter / Novita / Leap), model catalog, retry infrastructure
+- **LLM** — pluggable clients (OpenAI / OpenRouter / Novita), model catalog, retry infrastructure
 
 Full design docs live under [`doc/main/`](doc/main/README.md). Start there for the agent loop, tool system, and protocol contracts.
+
+> **Note on on-device inference:** the codebase still ships the `LFMLLMClient` (Liquid AI Leap SDK) path, but it is not exposed in the UI for now as on-device inference is too slow to be practically useful yet. See [`doc/main/infra/llm.md`](doc/main/infra/llm.md) for details.
 
 ## Permissions & Privacy
 
