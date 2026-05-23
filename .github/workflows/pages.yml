@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - docs/privacy/**
+      - doc/release/privacy/**
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
       - name: Build privacy page
         uses: actions/jekyll-build-pages@v1
         with:
-          source: ./docs/privacy
+          source: ./doc/release/privacy
           destination: ./_site
 
       - name: Upload Pages artifact

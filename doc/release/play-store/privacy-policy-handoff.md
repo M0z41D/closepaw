@@ -5,13 +5,13 @@ This repository now contains a Google Play privacy policy for ClosePaw and a Git
 ## Files
 
 - `PRIVACY_POLICY.md`: canonical repository copy for review and editing.
-- `docs/privacy/index.md`: GitHub Pages copy that will publish at the public privacy URL.
+- `doc/release/privacy/index.md`: GitHub Pages copy that will publish at the public privacy URL.
 - `.github/workflows/pages.yml`: GitHub Actions workflow that builds `docs/` and deploys the privacy page with GitHub Pages.
 - `app/src/main/kotlin/ai/closepaw/ui/onboarding/OnboardingSteps.kt`: onboarding Accessibility copy links users to the published policy.
 
 ## Required owner steps
 
-1. Replace the placeholder contact email `ai.closepaw.privacy@gmail.com` in `PRIVACY_POLICY.md` and `docs/privacy/index.md` with the real privacy contact email before publishing.
+1. Replace the placeholder contact email `ai.closepaw.privacy@gmail.com` in `PRIVACY_POLICY.md` and `doc/release/privacy/index.md` with the real privacy contact email before publishing.
 2. Push these changes to the `main` branch.
 3. In GitHub repository settings, enable Pages and select GitHub Actions as the Pages source.
 4. Wait for the `Deploy Privacy Policy` workflow to complete.

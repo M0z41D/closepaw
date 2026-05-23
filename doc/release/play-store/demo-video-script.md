@@ -16,7 +16,7 @@
 
 ```bash
 adb shell screenrecord --size 1080x1920 --bit-rate 8000000 --time-limit 30 /sdcard/closepaw-a11y-demo.mp4
-adb pull /sdcard/closepaw-a11y-demo.mp4 docs/play-store/a11y-demo.mp4
+adb pull /sdcard/closepaw-a11y-demo.mp4 doc/release/play-store/a11y-demo.mp4
 adb shell rm /sdcard/closepaw-a11y-demo.mp4
 ```
 
@@ -54,7 +54,7 @@ adb shell am start -n "$PKG/.app.MainActivity"
 
 Use: `Catch me up on my emails`
 
-This matches the existing Play Store positioning: the canonical description lists "catch up on emails" as a supported task, and the screenshot order includes a Gmail live-view slide [docs/play-store/full-description.txt:3; docs/play-store/README.md:15-22].
+This matches the existing Play Store positioning: the canonical description lists "catch up on emails" as a supported task, and the screenshot order includes a Gmail live-view slide [doc/release/play-store/full-description.txt:3; doc/release/play-store/README.md:15-22].
 
 ## 30-Second Shot List
 

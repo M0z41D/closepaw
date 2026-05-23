@@ -29,7 +29,7 @@ Source-of-truth is `marketing/screenshot-editor/public/slides.html` + raw captur
 cd marketing/screenshot-editor && bun run dev
 # in another shell:
 node export-slides.js
-# copy outputs from marketing/export/ → docs/play-store/
+# copy outputs from marketing/export/ → doc/release/play-store/
 ```
 
 ## Pending items (separate tasks in projects/tasks.json)

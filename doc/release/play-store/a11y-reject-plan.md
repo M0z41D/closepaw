@@ -2,7 +2,7 @@
 
 ## 1. "This is general automation, not an accessibility feature."
 
-Likely reason: AI agents that operate arbitrary apps look like convenience automation. The strongest mitigation is to frame ClosePaw as an assistive input replacement: the user states a goal in natural language and delegates tapping, swiping, reading, and typing that would otherwise require manual phone operation [docs/play-store/full-description.txt:3,8-11]. The declaration should avoid "growth", "productivity hack", or "background automation" language.
+Likely reason: AI agents that operate arbitrary apps look like convenience automation. The strongest mitigation is to frame ClosePaw as an assistive input replacement: the user states a goal in natural language and delegates tapping, swiping, reading, and typing that would otherwise require manual phone operation [doc/release/play-store/full-description.txt:3,8-11]. The declaration should avoid "growth", "productivity hack", or "background automation" language.
 
 Pre-emptive mitigation: emphasize user-initiated operation, Smart Capsule visibility, Stop/Takeover controls, and manual Android Settings enablement [app/src/main/kotlin/ai/closepaw/ui/overlay/model/CapsuleRenderSpec.kt:63-97,170-172; app/src/main/kotlin/ai/closepaw/app/MainActivityUiHelpers.kt:21-23].
 
