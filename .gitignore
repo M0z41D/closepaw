@@ -154,3 +154,6 @@ export/
 # (No trailing slash so the patterns also match the symlinks themselves.)
 projects
 .claude/projects
+
+# Personal IDE config
+.vscode/
