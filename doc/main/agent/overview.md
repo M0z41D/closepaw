@@ -96,8 +96,7 @@ ai.closepaw/
 │   │   │   └── NavigationState.kt      # Screen signatures + loop detection data
 │   │   └── policy/
 │   │       ├── TurnToolPolicy.kt       # Tool arbitration + completion decision
-│   │       ├── LoopDetectionPolicy.kt  # Repeated screen/action warnings
-│   │       └── TurnBudget.kt           # DelegationSummaryFormatter for subagent timeout summaries
+│   │       └── LoopDetectionPolicy.kt  # Repeated screen/action warnings
 │   └── subagent/
 │       └── SubAgentRunner.kt           # SubAgentRequest, SubAgentResult, IsolatedSubAgentRunner
 │

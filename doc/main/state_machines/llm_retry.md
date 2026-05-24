@@ -6,7 +6,7 @@
 - `app/src/main/kotlin/ai/closepaw/llm/CloudStreamRetryRunner.kt` — `streamWithRetry` scaffold that drives the policy
 - `app/src/main/kotlin/ai/closepaw/llm/CloudLlmRetry.kt` — non-streaming retry loop + shared `advanceBackoff`
 
-Constants come from `LLMClient` companion: `MAX_RETRIES`, `INITIAL_BACKOFF_MS`, `MAX_BACKOFF_MS`, `BACKOFF_MULTIPLIER` (UNCONFIRMED — exact values, not read here; see `LLMClient.kt`).
+Constants come from `LLMClient` companion (LLMClient.kt:29-32): `MAX_RETRIES = 5`, `INITIAL_BACKOFF_MS = 1000L`, `MAX_BACKOFF_MS = 60000L`, `BACKOFF_MULTIPLIER = 2.0`.
 
 ## Streaming retry — `CloudStreamRetryPolicy.decide` (CloudStreamRetryPolicy.kt:14-50)
 
@@ -122,7 +122,7 @@ None. Retry state is per-invocation only.
 
 ## Open questions / smells
 
-- `LLMClient.MAX_RETRIES` etc. are not read in this doc — UNCONFIRMED exact values (default appears to be 3 based on prior comments; check `LLMClient.kt`).
+- `LLMClient.MAX_RETRIES = 5` (LLMClient.kt:29). Streaming attempts run 1..MAX_RETRIES; non-streaming retries until `attempt == MAX_RETRIES`.
 - Streaming `failureEmitted` is set only when the attempt **emits** a `Failed`; if the attempt block throws but had already emitted a `Failed` (rare), the policy would still see `emittedEvent = true` and return `FailAndStop`, which then re-emits a `Failed` synthetic only if `failureEmitted == false`. Logically consistent but worth verifying with a test (`CloudStreamRetryRunnerTest.kt`).
 - The non-streaming loop does not honor `emittedEvent` semantics (it has no event stream), so a non-streaming call may be retried any number of times up to `MAX_RETRIES` even after partial side-effects.
 - `OpenAIErrorClassifier` is invoked only for streaming. UNCONFIRMED whether non-streaming callers wrap their own errors before throwing.

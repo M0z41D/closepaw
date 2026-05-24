@@ -166,7 +166,6 @@ ui/overlay/
 ├── model/
 │   ├── CapsuleMode.kt               # 8 modes (sealed interface)
 │   ├── CapsuleContext.kt            # MAIN_APP / SCREEN_VIEWING / BACKGROUND
-│   ├── CapsuleColors.kt            # Status dot colors
 │   ├── CapsuleRenderSpec.kt        # Mode → visual properties + NavSpec
 │   └── GlowState.kt                # Glow state enum + deriveGlowState()
 └── visualizer/
@@ -175,11 +174,17 @@ ui/overlay/
 ui/capsule/
 ├── NavAction.kt                     # Capsule nav-cluster action enum
 ├── CapsuleBinding.kt                # Runtime-bridge value type (chat hosts)
-└── surface/
-    ├── SmartCapsuleSurface.kt       # Slim orchestrator: status / detail / control / input
-    ├── CapsuleControlBar.kt         # Action + nav clusters
-    ├── CapsuleInputBar.kt           # Text field + send (owns draft state)
-    └── SmartCapsuleHostLayout.kt    # Host-level padding
+├── surface/
+│   ├── SmartCapsuleSurface.kt       # Slim orchestrator: status / detail / control / input
+│   ├── CapsuleControlBar.kt         # Action + nav clusters
+│   ├── CapsuleInputBar.kt           # Text field + send (owns draft state)
+│   ├── SmartCapsuleHostLayout.kt    # Host-level padding
+│   ├── StatusColors.kt              # Mode → status dot/glow color derivation
+│   └── StatusPawGlyph.kt            # Line-art paw glyph, tinted by status color
+└── voice/
+    ├── Recognizer.kt                # JVM-clean recognizer interfaces + Android impl
+    ├── VoiceInputController.kt      # Voice-input state machine
+    └── VoicePermissionGate.kt       # RECORD_AUDIO permission flow
 
 app/
 ├── ServiceOverlayController.kt     # Mode-aware overlay branching

@@ -6,11 +6,11 @@
 - `app/src/main/kotlin/ai/closepaw/onboarding/OnboardingViewModel.kt` (`startDemo`, `skipStep`)
 - `app/src/main/kotlin/ai/closepaw/onboarding/OnboardingDemoController.kt` (throwaway `AgentSession` driver)
 
-## States — `DemoStepState` (OnboardingState.kt:69-78)
+## States — `DemoStepState` (OnboardingState.kt:71-80)
 
 | State | Data | Meaning |
 |---|---|---|
-| `Ready` | none | Initial state on entering the Demo step (OnboardingViewModel.kt:365-367) |
+| `Ready` | none | Initial state on entering the Demo step (OnboardingViewModel.kt:370-372) |
 | `Preflight` | none | `startDemo` re-checks hard gates and apiKey before running |
 | `Running` | none | `OnboardingDemoController.run` is in flight |
 | `Success` | `message: String` | Demo finished with `GOAL_ACHIEVED` (settings open or generic) |
@@ -20,27 +20,27 @@
 
 ## Transitions — `startDemo` + controller callbacks
 
-`startDemo()` (OnboardingViewModel.kt:245-289):
+`startDemo()` (OnboardingViewModel.kt:252-296):
 
 | From | To | Trigger | Guard |
 |---|---|---|---|
-| `Ready` (or any) | `Preflight` | `startDemo()` | requires `currentStep == Demo` (OnboardingViewModel.kt:246) |
-| `Preflight` | (back to broken permission step) | `!isAccessibilityEnabled() || !isOverlayEnabled()` | resets that step's outcome to `Pending`, jumps via `enterStep` (OnboardingViewModel.kt:250-261) |
-| `Preflight` | (back to ApiKey) | `outcomes.apiKey != Done` | jumps via `enterStep(ApiKey)` (OnboardingViewModel.kt:262-266) |
-| `Preflight` | `Running` | preflight passes | `demoController.run(...)` invoked (OnboardingViewModel.kt:268-289) |
-| `Running` | `Success(message)` | `onSuccess` callback (`GOAL_ACHIEVED`) | persists `Done`, auto-advances after 400 ms (OnboardingViewModel.kt:270-278) |
-| `Running` | `Failure(reason)` | `onFailure` callback | does **not** persist; user retries (OnboardingViewModel.kt:279-281) |
-| `Running` | `CredentialError(message, isOAuth)` | `onCredentialError` callback | (OnboardingViewModel.kt:282-284) |
+| `Ready` (or any) | `Preflight` | `startDemo()` | requires `currentStep == Demo` (OnboardingViewModel.kt:253) |
+| `Preflight` | (back to broken permission step) | `!isAccessibilityEnabled() || !isOverlayEnabled()` | resets that step's outcome to `Pending`, jumps via `enterStep` (OnboardingViewModel.kt:257-268) |
+| `Preflight` | (back to ApiKey) | `outcomes.apiKey != Done` | jumps via `enterStep(ApiKey)` (OnboardingViewModel.kt:269-273) |
+| `Preflight` | `Running` | preflight passes | `demoController.run(...)` invoked (OnboardingViewModel.kt:275-296) |
+| `Running` | `Success(message)` | `onSuccess` callback (`GOAL_ACHIEVED`) | persists `Done`, auto-advances after 400 ms (OnboardingViewModel.kt:277-285) |
+| `Running` | `Failure(reason)` | `onFailure` callback | does **not** persist; user retries (OnboardingViewModel.kt:286-288) |
+| `Running` | `CredentialError(message, isOAuth)` | `onCredentialError` callback | (OnboardingViewModel.kt:289-291) |
 
-`Failure`/`CredentialError`/`Success`/`Ready` → `Skipped` via `skipStep()` (OnboardingViewModel.kt:298-303).
+`Failure`/`CredentialError`/`Success`/`Ready` → `Skipped` via `skipStep()` (OnboardingViewModel.kt:298-312).
 
-`CredentialError` → `ApiKey` step via `goToAuthStep()` (OnboardingViewModel.kt:166-175).
+`CredentialError` → `ApiKey` step via `goToAuthStep()` (OnboardingViewModel.kt:171-180).
 
 `Success` → next step (`Complete`) via auto-advance.
 
 Any → `Ready` via `goBack()` from the next step (re-entry sets `DemoStepState.Ready`).
 
-## Demo controller — outcome mapping (OnboardingDemoController.kt:144-203)
+## Demo controller — outcome mapping (OnboardingDemoController.kt:145-213)
 
 The controller resolves the awaited `TaskCompleted` event under a 60 s timeout. Outcome → callback:
 
@@ -58,7 +58,7 @@ The controller resolves the awaited `TaskCompleted` event under a 60 s timeout. 
 | any other exception | `onFailure("Demo failed: ${e.message}")` | `Failure` |
 | Service not bound | `onFailure("Accessibility service not available")` | `Failure` |
 
-All success/failure callbacks also invoke `onBringToFront()` → `OnboardingEffect.BringMainActivityToFront` (OnboardingDemoController.kt:151, 155, 165, 170) so the demo UI returns to foreground.
+All success/failure callbacks also invoke `onBringToFront()` → `OnboardingEffect.BringMainActivityToFront` (OnboardingDemoController.kt:162, 166, 175, 180) so the demo UI returns to foreground.
 
 ## Diagram
 
@@ -83,12 +83,12 @@ stateDiagram-v2
 
 ## Invariants
 
-- `startDemo` no-ops unless `currentStep == Demo` (OnboardingViewModel.kt:246).
-- `Preflight` is a single atomic phase — either it short-circuits to a missing-prereq step, or it transitions to `Running` synchronously without yielding control to the UI thread between (OnboardingViewModel.kt:268-269).
+- `startDemo` no-ops unless `currentStep == Demo` (OnboardingViewModel.kt:253).
+- `Preflight` is a single atomic phase — either it short-circuits to a missing-prereq step, or it transitions to `Running` synchronously without yielding control to the UI thread between (OnboardingViewModel.kt:275-276).
 - Only `Success` persists `StepOutcome.Done`; `Failure`/`CredentialError` keep the step pending so the next launch returns to `Demo` (or the user can `skipStep` for `Skipped`).
-- `OnboardingDemoController.run` cancels any prior demo before starting a new one (OnboardingDemoController.kt:66, 209-213).
-- Demo session is **always** torn down via `Op.Shutdown` in the `finally` block (OnboardingDemoController.kt:203-205, 215-226), even on exception.
-- The demo session uses `ApprovalMode.AUTO_APPROVE` (OnboardingDemoController.kt:82) so no user approval interrupts the funnel.
+- `OnboardingDemoController.run` cancels any prior demo before starting a new one (OnboardingDemoController.kt:70, 219-223).
+- Demo session is **always** torn down via `Op.Shutdown` in the `finally` block (OnboardingDemoController.kt:213-216, 225-244), even on exception.
+- The demo session uses `ApprovalMode.AUTO_APPROVE` (OnboardingDemoController.kt:91) so no user approval interrupts the funnel.
 
 ## Persistence
 
@@ -101,15 +101,15 @@ stateDiagram-v2
 | Transition | Side-effects |
 |---|---|
 | `Ready → Preflight` | (none beyond state mutation) |
-| `Preflight → Running` | Builds `SessionConfig(AUTO_APPROVE, OPENAI backend, AccessibilityOnly)` (OnboardingDemoController.kt), creates `AgentSession` on `Dispatchers.IO`, registers it with `AgentService.observeExternalSession`, launches event collector, submits `Op.UserInput("Open the Settings app")` |
-| `Running → Success` | Persists `Done`, schedules `advanceToNextStep` after 400 ms (OnboardingViewModel.kt:271-277); also `onBringToFront` |
+| `Preflight → Running` | Builds `SessionConfig(AUTO_APPROVE, OPENAI backend, AccessibilityOnly)` (OnboardingDemoController.kt:88-93), creates `AgentSession` on `Dispatchers.IO`, registers it with `AgentService.observeExternalSession`, launches event collector, submits `Op.UserInput("Open the Settings app")` |
+| `Running → Success` | Persists `Done`, schedules `advanceToNextStep` after 400 ms (OnboardingViewModel.kt:278-284); also `onBringToFront` |
 | `Running → Failure/CredentialError` | `onBringToFront`; no persistence |
 | any → (controller exit) | `shutdownSession()` submits `Op.Shutdown` and clears `demoSession` reference |
 
 ## Error / recovery paths
 
 - 60 s timeout (`TIMEOUT_MS`) maps to `Failure`. The demo no longer has its own turn cap — production runs are bounded by context-window auto-compaction. The 60 s wall-clock timeout is what guards against a runaway demo.
-- Credential exceptions are mapped to `CredentialError` with `isOAuth` derived from `provider == OPENAI_CODEX` (OnboardingDemoController.kt:174-197).
+- Credential exceptions are mapped to `CredentialError` with `isOAuth` derived from `provider == OPENAI_CODEX` (OnboardingDemoController.kt:184-207).
 - Non-credential exceptions fall through to `Failure("Demo failed: …")`.
 - Controller's `cancel()` cancels the coroutine job and shuts down the session — used implicitly when `run` is called again.
 

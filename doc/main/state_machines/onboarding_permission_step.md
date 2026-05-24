@@ -8,7 +8,7 @@
 
 Applies to three wizard steps: `Accessibility`, `Overlay`, `Battery`.
 
-## States — `PermissionStepState` (OnboardingState.kt:45-52)
+## States — `PermissionStepState` (OnboardingState.kt:46-53)
 
 | State | Data | Meaning |
 |---|---|---|
@@ -21,22 +21,22 @@ Applies to three wizard steps: `Accessibility`, `Overlay`, `Battery`.
 
 `PermissionStepState` is a `sealed interface` with `data object` variants only (no per-state data).
 
-## Transitions — `checkCurrentPermission` (OnboardingViewModel.kt:374-411)
+## Transitions — `checkCurrentPermission` (OnboardingViewModel.kt:379-416)
 
 Inputs: `isReturnFromSettings: Boolean`, `autoAdvance: Boolean = true`.
 
 | From | To | Trigger | Guard |
 |---|---|---|---|
-| (entry to step) | `Checking` | `enterStep(stepInPermissionFamily)` → `checkCurrentPermission` (OnboardingViewModel.kt:329-331) | always set first (OnboardingViewModel.kt:375) |
-| `Checking` | `Satisfied` | live check returns true AND `autoAdvance == false` | (OnboardingViewModel.kt:384-389) |
-| `Checking` | (advance) | live check returns true AND `autoAdvance == true` | calls `onPermissionSatisfied` → sets `Satisfied`, persists `Done`, auto-advances (OnboardingViewModel.kt:413-427) |
-| `Checking` | `Ready` | live check false AND `isReturnFromSettings == false` | (OnboardingViewModel.kt:409-410) |
-| `Checking` | `Unsatisfied` | live check false AND `isReturnFromSettings == true` AND step is `Overlay`/`Battery` | (OnboardingViewModel.kt:409-410) |
-| `Checking` | `Satisfied` (poll path) | step is `Accessibility` AND `isReturnFromSettings == true` AND poll succeeds within 15 × 200 ms = 3 s | (OnboardingViewModel.kt:393-407) |
-| `Checking` | `Unsatisfied` | a11y poll exhausts 3 s without success | (OnboardingViewModel.kt:403-404) |
-| `Ready` / `Unsatisfied` | `OpeningSettings` | `openSystemSettings()` user action | also emits the relevant `OnboardingEffect` (OnboardingViewModel.kt:177-193) |
-| `OpeningSettings` | `Checking` | `onHostResumed()` → `checkCurrentPermission(isReturnFromSettings = true)` (OnboardingViewModel.kt:147-151) | step in permission family |
-| `Battery` `Ready`/`Unsatisfied` | `Skipped` | `skipStep()` → persists `Skipped`, advances | not represented as a `PermissionStepState` write — the wizard advances and the Battery step is left behind (OnboardingViewModel.kt:292-297) |
+| (entry to step) | `Checking` | `enterStep(stepInPermissionFamily)` → `checkCurrentPermission` (OnboardingViewModel.kt:336-338) | always set first (OnboardingViewModel.kt:380) |
+| `Checking` | `Satisfied` | live check returns true AND `autoAdvance == false` | (OnboardingViewModel.kt:389-394) |
+| `Checking` | (advance) | live check returns true AND `autoAdvance == true` | calls `onPermissionSatisfied` → sets `Satisfied`, persists `Done`, auto-advances (OnboardingViewModel.kt:418-432) |
+| `Checking` | `Ready` | live check false AND `isReturnFromSettings == false` | (OnboardingViewModel.kt:414-415) |
+| `Checking` | `Unsatisfied` | live check false AND `isReturnFromSettings == true` AND step is `Overlay`/`Battery` | (OnboardingViewModel.kt:414-415) |
+| `Checking` | `Satisfied` (poll path) | step is `Accessibility` AND `isReturnFromSettings == true` AND poll succeeds within `A11Y_POLL_MAX_ATTEMPTS × A11Y_POLL_INTERVAL_MS = 15 × 200 ms = 3 s` | (OnboardingViewModel.kt:398-411) |
+| `Checking` | `Unsatisfied` | a11y poll exhausts 3 s without success | (OnboardingViewModel.kt:408-409) |
+| `Ready` / `Unsatisfied` | `OpeningSettings` | `openSystemSettings()` user action | also emits the relevant `OnboardingEffect` (OnboardingViewModel.kt:182-198) |
+| `OpeningSettings` | `Checking` | `onHostResumed()` → `checkCurrentPermission(isReturnFromSettings = true)` (OnboardingViewModel.kt:152-156) | step in permission family |
+| `Battery` `Ready`/`Unsatisfied` | `Skipped` | `skipStep()` → persists `Skipped`, advances | not represented as a `PermissionStepState` write — the wizard advances and the Battery step is left behind (OnboardingViewModel.kt:298-312) |
 
 `Satisfied → Ready/Unsatisfied` is not directly modeled; if the user returns to a previously satisfied step via `goBack()`, `enterStep(step, autoAdvance=false)` re-enters and `checkCurrentPermission` re-derives the state.
 
@@ -59,10 +59,10 @@ stateDiagram-v2
 
 ## Invariants
 
-- `Skipped` is only reachable for the `Battery` wizard step; `skipStep` no-ops on `Accessibility`/`Overlay` (OnboardingViewModel.kt:291-305).
+- `Skipped` is only reachable for the `Battery` wizard step; `skipStep` no-ops on `Accessibility`/`Overlay` (OnboardingViewModel.kt:298-312).
 - `Checking` is always the first state on entry — both fresh entry and `onHostResumed` route through it.
 - The accessibility-service poll (3 s) only runs when returning from settings, never on first entry.
-- `autoAdvance = false` is used only by `goBack` (OnboardingViewModel.kt:156-157), so a user revisiting a satisfied step does not get bounced forward again.
+- `autoAdvance = false` is used only by `goBack` (OnboardingViewModel.kt:161-162), so a user revisiting a satisfied step does not get bounced forward again.
 
 ## Persistence
 
@@ -73,17 +73,17 @@ stateDiagram-v2
 
 | Transition | Side-effects |
 |---|---|
-| → `Checking` | Calls one of `permissionMonitor.{isAccessibilityEnabled, isOverlayEnabled, isBatteryOptimized}` (PermissionStateMonitor.kt:16-23) |
-| `Checking` → `Satisfied` (advance path) | `store.saveOutcome(step, Done)`, updates `outcomes`, schedules `advanceToNextStep` after 400 ms (OnboardingViewModel.kt:413-427) |
-| → `OpeningSettings` | Emits one of `OpenAccessibilitySettings`, `OpenOverlaySettings`, `OpenBatteryOptimization` via the `_effects` channel (OnboardingViewModel.kt:177-193) |
+| → `Checking` | Calls one of `permissionMonitor.{isAccessibilityEnabled, isOverlayEnabled, isBatteryOptimized}` (PermissionStateMonitor.kt) |
+| `Checking` → `Satisfied` (advance path) | `store.saveOutcome(step, Done)`, updates `outcomes`, schedules `advanceToNextStep` after 400 ms (OnboardingViewModel.kt:418-431) |
+| → `OpeningSettings` | Emits one of `OpenAccessibilitySettings`, `OpenOverlaySettings`, `OpenBatteryOptimization` via the `_effects` channel (OnboardingViewModel.kt:182-198) |
 | `Battery` → `Skipped` | `store.saveOutcome(Battery, Skipped)`, updates `outcomes`, advances |
 
-`PermissionStateMonitor.isAccessibilityEnabled()` is short-circuited to `AgentService.instance != null` (PermissionStateMonitor.kt:16) — i.e. it relies on the bound a11y service singleton, not the `Settings.Secure` enabled-services list.
+`PermissionStateMonitor.isAccessibilityEnabled()` is short-circuited to `AgentService.instance != null` — i.e. it relies on the bound a11y service singleton, not the `Settings.Secure` enabled-services list.
 
 ## Error / recovery paths
 
 - A11y poll never throws; it just falls through to `Unsatisfied` after 3 s.
-- If `onHostResumed` runs while `currentStep` is not in the permission family, it no-ops (OnboardingViewModel.kt:148-151).
+- If `onHostResumed` runs while `currentStep` is not in the permission family, it no-ops (OnboardingViewModel.kt:153-155).
 - A permission previously granted but later revoked is detected at the next `firstIncompleteStep` evaluation (live check overrides stored `Done`) — see [onboarding_wizard.md](onboarding_wizard.md).
 
 ## Open questions / smells

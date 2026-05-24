@@ -54,9 +54,8 @@ ui/
 │   ├── CapsuleBinding.kt        # Runtime-bridge value type for chat hosts
 │   └── surface/
 │       ├── SmartCapsuleSurface.kt   # Orchestrator: status/detail/control/input
-│       ├── SmartCapsuleSurfaceParts.kt # Status / Detail composable parts (semantic names)
 │       ├── CapsuleControlBar.kt     # Action + nav clusters
-│       ├── CapsuleInputBar.kt       # Text field + send (owns draft state)
+│       ├── CapsuleInputBar.kt       # Text field + send (owns draft state, VoiceMicDeps)
 │       ├── SmartCapsuleHostLayout.kt
 │       ├── StatusColors.kt          # Mode → status dot/glow color derivation
 │       └── StatusPawGlyph.kt        # Line-art paw glyph, tinted by status color (static — no breath animation)
@@ -88,7 +87,9 @@ ui/
 │       └── GlowState.kt         # State enum with hex colors
 │
 ├── session/
-│   ├── TimeUtils.kt             # Relative time formatting
+│   └── TimeUtils.kt             # Relative time formatting
+│
+├── common/
 │   └── ToolUi.kt                # Tool name formatting + icons
 │
 ├── viewer/

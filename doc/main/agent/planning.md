@@ -120,7 +120,10 @@ scratchpad(action = "delete", key = "recipient_email")
 
 ## Context Hygiene (History Compression)
 
-To control token usage, `HistoryManager` proactively downgrades old screen observations and runs a multi-phase compression pipeline when token budget is approached.
+To control token usage, `HistoryManager` proactively downgrades old screen
+observations on every `addItem(SCREEN_OBSERVATION)`. Context-window pressure
+is handled by per-turn `Compactor` summarization (see
+[memory.md → Conversation History & Compaction](memory.md#conversation-history--compaction)).
 
 ### Key Design Decisions
 
@@ -129,18 +132,18 @@ To control token usage, `HistoryManager` proactively downgrades old screen obser
 | **History** | User/assistant messages + function calls + function outputs, classified by `MessageKind` |
 | **Current Screen** | Current turn always includes full screen JSON in observation section |
 | **Screen History** | Each turn records screen JSON as `ResponseItem.Message(kind = SCREEN_OBSERVATION)` |
-| **Screen Compression** | `HistoryManager` proactively downgrades old screens on every `addItem()` |
-| **Token Budget** | `HistoryManager` auto-compresses at 85% of budget, down to 50% (KV cache efficient) |
-| **Compression owner** | Single owner: `HistoryManager`. `PromptBuilder` is read-only pass-through. |
+| **Screen Compression** | `HistoryManager` proactively downgrades old screens on every `addItem()`; keeps last `HistoryConfig.recentFullScreens` (default 3) full |
+| **Context-window pressure** | Per-turn `Compactor.maybeCompact` LLM-summarizes the older prefix when tokens exceed `contextWindow − reserve`; reactive `forceCompactNow` retries once on `ContextWindowExceededException` |
+| **Compression owner** | Single owner: `HistoryManager` for screen downgrade; `Compactor` for cross-turn summarization. `PromptBuilder` is read-only pass-through. |
 
-### Compression Pipeline
+### Local Compression (HistoryManager)
 
-**Phase 0** — Normalize call/output pairs.
-**Phase 1** — Downgrade old screen observations to one-liners (keeps last `recentFullScreens`).
-**Phase 2** — Group-aware eviction (oldest first, outside `recentWindowSize` tail). Never evicts `USER_INTENT`.
-**Phase 3** — Merge adjacent digests; return `BudgetUnreachable` if impossible.
+`HistoryManager.compress(target)` now only runs normalization + screen
+downgrade and returns a `CompressionResult`; it never drops content. The old
+lossy phased eviction (group-aware oldest-first deletion + breadcrumb digest)
+was removed when `Compactor` took over context-window pressure.
 
-→ Full details: [History Compression Pipeline](../app/history/runtime.md)
+→ Full details: [memory.md → Conversation History & Compaction](memory.md#conversation-history--compaction)
 
 ### Data Flow
 
@@ -170,8 +173,8 @@ Turn N                                  Turn N+1
 |---------|----------|
 | Token explosion from full a11y trees | Proactive screen downgrade on every new observation |
 | Stale screen-state confusion | Re-capture every turn and place current observation at input tail |
-| History bloat | Single-owner compression in `HistoryManager` with 4-phase pipeline |
-| KV cache thrashing | Compress to 50% of budget (not 95%) for ~22 turns of stable prefix |
+| History bloat | `Compactor` LLM-summarizes the older prefix when context-window pressure builds (proactive per-turn check + reactive retry on provider rejection) |
+| KV cache thrashing | Summarization keeps a stable recent tail (`keepRecentTokens`, default 20k) so the prefix changes infrequently |
 | Cross-turn data loss | Explicit persistence via scratchpad/todos |
 
 ---

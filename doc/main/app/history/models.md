@@ -40,6 +40,8 @@ sealed interface MessageRecord {
 @Serializable
 sealed interface ContentBlockRecord {
     data class Text(val text: String) : ContentBlockRecord
+    data class FinalText(val text: String) : ContentBlockRecord       // promoted from Text when the row seals
+    data class Thought(val text: String) : ContentBlockRecord          // ThoughtUpdate stream
     data class Action(id, toolName, description, state, resultSummary?) : ContentBlockRecord
 }
 ```

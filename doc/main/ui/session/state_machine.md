@@ -97,7 +97,7 @@ Two distinct completion events:
 turn cap. The eval-only `evalTurnBudget` overrun maps to `Error` (with message
 `"Eval turn budget reached (...)"`).
 
-`SessionCompleted.reason` is `SessionEndReason` (session-level, no task outcomes). It is derived from the **shutdown cause**, not the prior state (`AgentSession.kt:624-628`):
+`SessionCompleted.reason` is `SessionEndReason` (session-level, no task outcomes). It is derived from the **shutdown cause**, not the prior state (`AgentSession.handleShutdown` `ShutdownCause` → `SessionEndReason` mapping):
 
 | ShutdownCause | SessionEndReason | Trigger |
 |---------------|------------------|---------|

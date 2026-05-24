@@ -35,11 +35,14 @@ Unidirectional flow with a task-based model:
             │       └──────┬───────────────┬──────┘       │
             │  Op.Takeover │               │ TaskCompleted│
             │              ▼               │              │
-   Op.Resume│       ┌──────────┐           │              │
-            │       │  Paused  │           ▼              │
-            │       └──────────┘     ┌──────────┐         │
-            │    Op.UserInput        │   Idle   │─────────┘
-            │◄───────────────────────└────┬─────┘
+            │       ┌──────────────┐       │              │
+   Op.Resume│       │TakeoverPending│      ▼              │
+            │       └──────┬───────┘ ┌──────────┐         │
+            │   safe-point │         │   Idle   │─────────┘
+            │              ▼         └────┬─────┘
+            │         ┌────────┐          │ Op.UserInput
+            └─────────┤ Paused │◄─────────┘
+                      └────────┘
                                           │ Op.Shutdown
                                           ▼
                                    ┌───────────┐
@@ -55,7 +58,7 @@ Unidirectional flow with a task-based model:
 | `Interrupt` | Running | Stop current task → Idle |
 | `Shutdown` | Any | Graceful shutdown |
 | `Approve(id, decision, scope, packageName)` | Running | Resolve pending app-level approval |
-| `Supplement(text)` | Running | Inject context mid-task |
+| `Supplement(text)` | Running, Paused | Inject context mid-task |
 | `UserResponse(callId, response)` | Running | Respond to `ask_user` |
 
 ### Approval
@@ -75,32 +78,20 @@ approval scope.
 | `Created` | Initialized, not started |
 | `Running` | Actively executing a task |
 | `Idle` | Between tasks (Hot Idle — lightweight state, expensive resources released) |
-| `Paused` | Cooperative takeover |
+| `TakeoverPending` | Pause requested but agent has not yet reached a safe pause point (Resume rejected) |
+| `Paused` | Cooperative takeover confirmed |
 | `Shutdown` | Terminal — all resources released |
 
 -> See: [Session State Machine](../ui/session/state_machine.md) for formal transition rules and resource ownership.
 
 ## Error Handling
 
-> See: `protocol/AgentError.kt`
-
-`sealed class AgentError` with `message: String` and `isRecoverable: Boolean`.
-
-| Error Type | Recoverable | Description |
-|------------|-------------|-------------|
-| `LLMError` | Depends | API failure (429/503/504 = yes) |
-| `LLMParseError` | Yes | Response malformed |
-| `PlatformError` | No | Android platform failed |
-| `PermissionError` | No | Missing permission |
-| `ValidationError` | Yes | Tool params invalid |
-| `UnknownToolError` | Yes | Tool does not exist |
-| `InvalidStateError` | No | Wrong state for operation |
-| `SessionClosedError` | No | Already cancelled |
-| `ApprovalDeniedError` | Yes | User denied action |
-| `PolicyDeniedError` | No | Policy forbids action |
-| `UnexpectedError` | No | Unclassified |
-
-Factory: `AgentError.from(e: Throwable)` creates appropriate subtype.
+Errors surface as `SessionError(message: String)` on the event stream (see
+`protocol/SessionLifecycleEvents.kt`). There is no separate sealed error
+hierarchy in the protocol layer — error classification and recovery decisions
+live with the producing subsystems (LLM client, platform, tool router), and
+only a human-readable message is published to the UI. Fatal failures still
+emit a `SessionCompleted(reason = INTERRUPTED)` once the session winds down.
 
 ## Utilities
 
@@ -121,16 +112,26 @@ Factory: `AgentError.from(e: Throwable)` creates appropriate subtype.
 protocol/
 ├── Op.kt                     # UI→Agent commands
 ├── AgentEvent.kt             # Base event interface
-├── AgentEventDomains.kt      # 12 domain marker interfaces
-├── AgentError.kt             # Error hierarchy
-├── SessionConfig.kt          # Session configuration
-├── SessionState.kt           # 5-state machine
+├── AgentEventDomains.kt      # 11 domain marker interfaces
+├── SessionConfig.kt          # Session configuration (ApprovalMode, PlatformMode, LLMBackendType, SessionLlmConfig)
+├── SessionState.kt           # 6-state machine (incl. TakeoverPending)
 ├── SessionId.kt              # Session identifier
+├── AppTier.kt                # BLOCKED / CAUTIOUS / NORMAL classification
 ├── TaskOutcome.kt            # Task-level outcome (GOAL_ACHIEVED / TASK_IMPOSSIBLE / ERROR / USER_STOPPED)
 ├── SessionEndReason.kt       # Session-level shutdown reason (USER_STOPPED / IDLE_TIMEOUT / INTERRUPTED)
-├── Session/Task/Turn/Streaming/Action/Approval/AskUser/
-│   Thought/SubAgent/Perception/StatusEvents.kt
-├── ApprovalTypes.kt          # ApprovalDecision, RiskLevel
+├── CompletionHandoff.kt      # VD-only completion metadata for chat CTA
+├── SessionLifecycleEvents.kt # SessionStarted/Completed/Error/Takeover/Resumed/SupplementReceived
+├── TaskLifecycleEvents.kt    # TaskStarted/TaskCompleted
+├── TurnEvents.kt             # TurnStarted/Completed/PhaseChanged (+ TurnPhase.kt)
+├── StreamingEvents.kt        # MessageDelta
+├── ActionEvents.kt           # ActionProposed/Executed + ActionOutcome
+├── ApprovalEvents.kt         # ApprovalRequired
+├── AskUserEvents.kt          # AskUser (+ AskUserType.kt)
+├── ThoughtEvents.kt          # ThoughtUpdate
+├── SubAgentEvents.kt         # SubAgentStarted/Activity/Completed
+├── PerceptionEvents.kt       # ScreenCaptured (+ ScreenStatePhase.kt)
+├── StatusEvents.kt           # StatusUpdate
+├── ApprovalTypes.kt          # ApprovalDecision, ApprovalScope, ApprovalDetails
 ├── TodoModels.kt             # Todo, TodoStatus
 └── TextUtils.kt              # compactThought (opt-in 80-char preview)
 ```

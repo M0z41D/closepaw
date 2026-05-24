@@ -193,7 +193,6 @@ catch (e: ContextWindowExceededException) {
 - **Policy layer**: `TurnToolPolicy` arbitrates tool calls — keeps cognitive tools and screen-changing tools, defers `complete_task` when action tools exist. Navigation isolation (one screen-changing action per turn) is enforced at the prompt layer, not in code.
 - **Loop guard**: `LoopDetectionPolicy` detects stable screens (near-identical for 5 consecutive turns at Jaccard >= 0.95) and emits a factual warning. No strategy suggestions — the LLM decides what to do.
 - **Action descriptions**: `ActionDescriptionFormatter` produces human-readable action descriptions using the shared `ActionTarget` decoder.
-- **Delegation summary**: `DelegationSummaryFormatter` produces a narrative summary of attempts surfaced back to a parent agent on subagent timeout.
 
 ---
 

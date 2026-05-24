@@ -50,7 +50,6 @@ Executes one delegated request with isolated runtime state:
 - Shares parent scratchpad intentionally for data handoff
 - Runs as `AgentExecutionRole.SUBAGENT`
 - Returns normalized `SubAgentResult(success, message)`
-- Produces a narrative summary via `DelegationSummaryFormatter` when the subagent times out
 - Handles timeout via `withTimeoutOrNull` against `resolvedRoleDef.timeoutMs`
 
 ### DelegateTaskTool
@@ -81,11 +80,11 @@ When `delegate_task` runs, `DelegateTaskTool` emits `SubAgentStarted`, creates a
 
 ## Model Resolution
 
-Each runtime agent can use a different model:
+Both runtime agents share one model:
 - Main agent: `SessionConfig.mainModel`
-- Subagent: `SessionConfig.subagentModel ?: SessionConfig.mainModel`
+- Subagent: inherits `parentServices.config.mainModel` — there is no separate subagent model field.
 
-`SessionLlmBootstrapper` validates credentials for both selected models before session start.
+`SessionLlmBootstrapper` validates credentials for the selected model before session start.
 
 ## Subagent Events
 

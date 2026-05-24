@@ -6,14 +6,14 @@
 
 ## Event Domain Hierarchy
 
-All events implement `AgentEvent` with `sessionId: SessionId` and `timestamp: Long`. Organized into 12 domain marker interfaces for type-safe filtering.
+All events implement `AgentEvent` with `sessionId: SessionId` and `timestamp: Long`. Organized into 11 domain marker interfaces for type-safe filtering.
 
 ```
 AgentEvent (sealed interface)
 ├── SessionLifecycleEvent
 │   ├── SessionStarted(goal)
 │   ├── SessionCompleted(result?, reason)
-│   ├── SessionError(error: AgentError)
+│   ├── SessionError(message)
 │   ├── SessionTakeover
 │   ├── SessionResumed
 │   └── SupplementReceived(text)
@@ -28,13 +28,13 @@ AgentEvent (sealed interface)
 │   └── MessageDelta(turnId, delta)
 ├── ActionDomainEvent
 │   ├── ActionProposed(actionId, toolName, description)
-│   └── ActionExecuted(actionId, toolName, success, result?)
+│   └── ActionExecuted(actionId, toolName, outcome: ActionOutcome, result?)
 ├── ApprovalDomainEvent
-│   └── ApprovalRequired(actionId, description, details)
+│   └── ApprovalRequired(description, details: ApprovalDetails)
 ├── AskUserDomainEvent
 │   └── AskUser(type: AskUserType, message, callId)
 ├── ThoughtDomainEvent
-│   └── ThoughtUpdate(thought)
+│   └── ThoughtUpdate(full, compact)
 ├── SubAgentDomainEvent
 │   ├── SubAgentStarted(agentName, query)
 │   ├── SubAgentActivity(agentName, activity)
@@ -52,8 +52,8 @@ AgentEvent (sealed interface)
 | `SessionStarted` | First Created → Running | `goal` |
 | `TaskStarted` | New task begins | `taskId`, `input` |
 | `MessageDelta` | Streaming text chunk | `turnId`, `delta` |
-| `ThoughtUpdate` | Agent selects tool with `agent_thought` | `thought` |
-| `ActionExecuted` | Tool completes | `actionId`, `toolName`, `success` |
+| `ThoughtUpdate` | Agent selects tool with `agent_thought` | `full`, `compact` |
+| `ActionExecuted` | Tool completes | `actionId`, `toolName`, `outcome` |
 | `AskUser` | Agent needs user help | `type`, `message`, `callId` |
 | `SupplementReceived` | User sent mid-task supplement | `text` |
 | `SessionTakeover` | User takes over (after agent pauses) | — |
@@ -63,6 +63,8 @@ AgentEvent (sealed interface)
 ## Enums
 
 **AskUserType**: `QUESTION` (user types text answer), `ACTION` (user performs physical action, taps "Done").
+
+**ActionOutcome**: `SUCCESS`, `FAILED`, `SKIPPED`.
 
 **TurnPhase**: `PERCEPTION` (capturing screen), `PLANNING` (LLM reasoning), `EXECUTION` (tool call).
 

@@ -31,7 +31,7 @@ System prompt text is sourced from `DefaultRoleDef` and passed to `Turn`.
 
 ### Prompt Structure
 
-The standalone and planner prompts now keep only cross-tool policy in the system prompt:
+The default role prompt keeps only cross-tool policy in the system prompt:
 
 1. **Role** — Agent identity and success criteria
 2. **Critical Rules** — Turn-shape, evidence, retry/pivot, and coordination policy
@@ -46,7 +46,7 @@ Tool-local semantics now live in tool descriptions, app-specific guidance lives 
 `app/src/main/assets/app_skills/<package>/SKILL.md`, and task/capability guidance lives in
 `filesDir/skills/<name>/SKILL.md` (Agent Skills, see [agent_skills.md](agent_skills.md)).
 
-→ See: `agent/definition/StandaloneAgentDef.kt`, `agent/definition/PlannerAgentDef.kt`
+→ See: `agent/definition/DefaultAgentDef.kt`
 
 ---
 
@@ -106,6 +106,9 @@ When todos or scratchpad keys exist, a single user message is inserted:
 - key_b
 ```
 
+- Omitted when both todo list and scratchpad are empty.
+- Scratchpad exposes keys only (not values) in the memory section.
+
 ### 2.3 Recalled Memory Section (Optional)
 
 When `MemoryRecaller.recall(currentPackageName)` returns content, it is injected as a single user message after working memory. This provides cross-session learnings to the LLM.
@@ -113,21 +116,21 @@ When `MemoryRecaller.recall(currentPackageName)` returns content, it is injected
 ```text
 ## Recalled Memory
 
-These are learnings from previous sessions. Use them to avoid repeating mistakes.
+These are durable learnings from previous sessions. Use them when relevant.
 
 ### App: com.android.settings
-- [2026-03-11] [workflow] Developer Options is under System > Developer Options
-- [2026-03-11] [pitfall] "About phone" scroll position resets on back-navigate
+- [2026-03-11] Developer Options is under System > Developer Options
+- [2026-03-11] "About phone" scroll position resets on back-navigate
 ```
 
-The recaller uses an elastic budget (device 1KB + user_prefs 1.5KB + app remainder, total ≤6KB). Newest entries are kept on truncation.
+Recall is deterministic and scope-first (user → device → app). Each file is
+read raw; blank files and files exceeding `MemoryStore.maxFileBytes` (8 KB)
+are skipped. There is no per-scope sub-budget — the per-file cap is the only
+size gate.
 
 → See: [memory.md](memory.md) for full memory system details.
 
-- Omitted when both todo list and scratchpad are empty.
-- Scratchpad exposes keys only (not values) in the memory section.
-
-### 2.3 App Skill Section (Optional)
+### 2.4 App Skill Section (Optional)
 
 When the foreground package matches an asset under `app_skills/<package>/SKILL.md`,
 `TurnPlanningPhaseRunner` loads the whole file through `AppSkillRepository` and injects:
@@ -155,7 +158,7 @@ metadata:
 
 `name` is `app-<short-name>` (lowercase-hyphen, user-recognizable). `metadata.package` carries the Android package name. The on-disk directory is still keyed by package name; lookup uses the directory, not the `metadata.package` field. The shared `SkillFrontmatterParser` strips frontmatter for both App Skills and Agent Skills.
 
-### 2.4 Activated Agent Skills Section (Optional)
+### 2.5 Activated Agent Skills Section (Optional)
 
 When the user goal contains `/skill-name` mentions matching skills in the catalog, the bodies are activated by `TurnPlanningPhaseRunner` and injected as a single user message AFTER the app skill but BEFORE the observation:
 
@@ -171,7 +174,7 @@ Bodies are loaded only on the first turn after explicit mention; subsequent turn
 
 → See: [agent_skills.md](agent_skills.md) for the full Agent Skills system.
 
-### 2.5 Observation Section
+### 2.6 Observation Section
 
 Final user message always includes current screen JSON. An optional `Turn N`
 header is rendered when a positive turn number is supplied — purely informational,

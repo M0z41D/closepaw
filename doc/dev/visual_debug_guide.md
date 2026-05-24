@@ -1,6 +1,6 @@
 # ClosePaw Visual Debugging Guide
 
-> **Prerequisites:** Understand the agent architecture in [doc/main/agent_infra.md](../doc/main/agent_infra.md)
+> **Prerequisites:** Understand the agent architecture in [doc/main/README.md](../main/README.md) (start with `agent/loop.md` and `agent/overview.md`).
 
 Visual debugging approach for ClosePaw's ReAct loop using screenshots + logs.
 
@@ -21,13 +21,15 @@ Visual debugging approach for ClosePaw's ReAct loop using screenshots + logs.
 ./scripts/debug-run.sh "Open Chrome"
 ```
 
-Output in `debug-output/`:
+Output in `debug-output/run_<timestamp>/`:
 ```
-debug-output/
-├── turn_N.png           # Screenshot at each turn
-├── turn_N_log.txt       # Log excerpt for that turn
-├── orchestration.log    # Full agent log
-└── agent.log            # Full app log
+debug-output/run_<timestamp>/
+├── turn_NNN_n<turn>.png     # Screenshot at each captured turn-start
+├── turn_NNN_n<turn>_log.txt # Log excerpt around that turn
+├── logcat_full.log          # Raw logcat stream
+├── agent.log                # Filtered: Agent|Turn|LLMClient|ToolRouter|SessionServices
+├── system.log               # Filtered: AgentService|AccessibilityPlatform|AgentSession
+└── trace/                   # JSONL trace + replay artifacts (compiled by replay_compiler.py)
 ```
 
 ### Step 2: Turn-by-Turn Analysis
@@ -36,8 +38,8 @@ For each turn, compare:
 
 | Check | Source | Look For |
 |-------|--------|----------|
-| Actual screen | `turn_N.png` | What's visible, is target there? |
-| Perceived elements | `turn_N_log.txt` | Element indices, missing elements |
+| Actual screen | `turn_NNN_n<turn>.png` | What's visible, is target there? |
+| Perceived elements | `turn_NNN_n<turn>_log.txt` | Element indices, missing elements |
 | Action chosen | Log: `ACTION` | Does action match goal? |
 | Result | Log: `ActionResult` | Success/failure, observation |
 
@@ -109,17 +111,20 @@ open /tmp/check.png
 ## Quick Diagnostics
 
 ```bash
+# Pick the latest run dir
+RUN=$(ls -1dt debug-output/run_* | head -n 1)
+
 # Actions taken
-grep -E "click|type|scroll|swipe|back|home" debug-output/orchestration.log
+grep -E "click|type|scroll|swipe|back|home" "$RUN/agent.log"
 
 # Tool results
-grep "ActionResult\|ToolCallResult" debug-output/orchestration.log
+grep "ActionResult\|ToolCallResult" "$RUN/agent.log"
 
 # Errors
-grep "ERROR\|Exception" debug-output/agent.log
+grep "ERROR\|Exception" "$RUN/agent.log" "$RUN/system.log"
 
 # Turn markers
-grep "Turn\|TURN" debug-output/orchestration.log
+grep "=== TURN" "$RUN/agent.log"
 ```
 
 ## Example Session
@@ -130,27 +135,27 @@ grep "Turn\|TURN" debug-output/orchestration.log
 # 1. Run debug
 ./scripts/debug-run.sh "Open Chrome"
 
-# 2. Check turn_2.png - Chrome icon visible
+# 2. Check turn_002_n2.png - Chrome icon visible
 
-# 3. Check turn_2_log.txt
+# 3. Check turn_002_n2_log.txt
 # PERCEPTION: element_index=10, text="Chrome", clickable=true
 # ACTION: {"tool": "back"}  ← BUG
 
 # 4. Issue: LLM reasoning wrong despite correct perception
-# Fix: Update system prompt in Agent.kt
+# Fix: Update system prompt in agent/definition/DefaultAgentDef.kt
 
 # 5. Verify
-./scripts/setup.sh && ./scripts/debug-run.sh "Open Chrome"
+./scripts/debug-run.sh "Open Chrome"
 ```
 
 ## Key Files
 
-> See [doc/main/agent_infra.md](../doc/main/agent_infra.md) for full architecture
+> See [doc/main/README.md](../main/README.md) for full architecture (entry to `agent/`, `infra/`, `protocol/`, `ui/` docs).
 
 | File | Purpose |
 |------|---------|
-| `agent/Agent.kt` | ReAct loop (Perceive → Think → Act → Observe) |
-| `agent/Turn.kt` | Single LLM call with streaming |
-| `perception/Perceptor.kt` | Accessibility tree → ScreenSnapshot |
-| `tool/ToolRouter.kt` | Tool execution state machine |
-| `platform/AccessibilityPlatform.kt` | Screen capture and actions |
+| `app/src/main/kotlin/ai/closepaw/agent/Agent.kt` | ReAct loop (Perceive → Think → Act → Observe) |
+| `app/src/main/kotlin/ai/closepaw/agent/Turn.kt` | Single LLM call with streaming |
+| `app/src/main/kotlin/ai/closepaw/perception/Perceptor.kt` | Accessibility tree → ScreenSnapshot |
+| `app/src/main/kotlin/ai/closepaw/tool/ToolRouter.kt` | Tool execution state machine |
+| `app/src/main/kotlin/ai/closepaw/platform/AccessibilityPlatform.kt` | Screen capture and actions |

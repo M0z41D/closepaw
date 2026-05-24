@@ -16,6 +16,7 @@ Authoritative reference for every finite-state machine (FSM) inside the ClosePaw
 | Onboarding permission step | `app/src/main/kotlin/ai/closepaw/onboarding/OnboardingState.kt`, `app/src/main/kotlin/ai/closepaw/onboarding/OnboardingViewModel.kt` | [onboarding_permission_step.md](onboarding_permission_step.md) |
 | Onboarding API-key step | `app/src/main/kotlin/ai/closepaw/onboarding/OnboardingState.kt`, `app/src/main/kotlin/ai/closepaw/onboarding/OnboardingViewModel.kt` | [onboarding_apikey_step.md](onboarding_apikey_step.md) |
 | Onboarding demo step | `app/src/main/kotlin/ai/closepaw/onboarding/OnboardingState.kt`, `app/src/main/kotlin/ai/closepaw/onboarding/OnboardingDemoController.kt` | [onboarding_demo_step.md](onboarding_demo_step.md) |
+| Onboarding step state hierarchies (sealed-type rationale) | `app/src/main/kotlin/ai/closepaw/onboarding/OnboardingState.kt` | [onboarding_step_states.md](onboarding_step_states.md) |
 | Smart Capsule UI | `app/src/main/kotlin/ai/closepaw/ui/overlay/model/CapsuleMode.kt`, `app/src/main/kotlin/ai/closepaw/ui/overlay/CapsuleStateHolder.kt` | [ui_capsule.md](ui_capsule.md) |
 | Chat UI | `app/src/main/kotlin/ai/closepaw/ui/chat/model/ChatMessage.kt`, `app/src/main/kotlin/ai/closepaw/ui/chat/ChatEventReducer.kt` | [ui_chat.md](ui_chat.md) |
 

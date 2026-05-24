@@ -46,7 +46,7 @@ Cloud client using Chat Completions API. Works with any OpenAI-compatible endpoi
 
 > See: `llm/CodexResponseClient.kt`
 
-Cloud client for OAuth users, targeting `chatgpt.com/backend-api/codex/responses`. OAuth access tokens lack platform API scopes, so they cannot use `api.openai.com`. Uses raw OkHttp + manual SSE parsing via `CodexRequestBuilder` (JSON serialization) and `CodexSseParser` (SSE parsing with parallel-safe `ToolCallAccumulator`). Routed by `LLMClientFactory` when `entry.provider == OPENAI_CODEX`. Constructor takes a `suspend () -> CodexHeaders` supplier; every request reads fresh `accessToken`/`chatgptAccountId`/`email` from `AuthStore.codexHeaders()` so account switches and token rotations work without invalidating the cached client. The active OkHttp `Call` is stored in an `AtomicReference` and cancelled from `awaitClose`.
+Cloud client for OAuth users, targeting `chatgpt.com/backend-api/codex/responses`. OAuth access tokens lack platform API scopes, so they cannot use `api.openai.com`. Uses raw OkHttp + manual SSE parsing via `CodexRequestBuilder` (JSON serialization) and `CodexSseParser` (SSE parsing with parallel-safe `ToolCallAccumulator`). Routed by `LLMClientFactory` when `entry.provider == OPENAI_CODEX`. Constructor takes a `suspend () -> CodexHeaders` supplier; every request reads fresh `accessToken`/`chatgptAccountId`/`email` from `AuthStore.codexHeaders(provider)` so account switches and token rotations work without invalidating the cached client. The active OkHttp `Call` is stored in an `AtomicReference` and cancelled from `awaitClose`.
 
 Wire format note: Codex requires wrapped content arrays where user messages use `"type": "input_text"` and assistant messages use `"type": "output_text"` (not `input_text` — the API rejects it with HTTP 400).
 
@@ -109,7 +109,7 @@ The Other / OpenRouter cloud-model picker (`SearchableGroupedModelPicker`) uses 
 
 > See: `llm/LLMClientFactory.kt`
 
-Creates `LLMClient` instances from model names. Constructor takes the catalog, an `AuthStore` (single credential source), and a base-URL override map. Cached as `ConcurrentHashMap<modelName, Entry(generation, client)>` — atomic `compute()` for lookup+rebuild guarantees that a credential rotation never returns a stale client (factory consults `authStore.generation(provider)` and rebuilds when it changes). Routes purely on `entry.provider`: `OPENAI_API`/`OPENROUTER`/`OTHER` → `OpenAIResponseClient`/`OpenAIChatClient` with `authStore.requireApiKey(provider)` (OTHER additionally hard-requires non-blank `entry.baseUrl` and throws `MissingCredential(OTHER)` otherwise, so a malformed synth entry can't leak the user's key to api.openai.com); `OPENAI_CODEX` → `CodexResponseClient` with `headerSupplier = { authStore.codexHeaders() }`; `LOCAL_LFM` → `LFMLLMClient`. `requireApiKey` throws typed `MissingCredential` / `WrongCredentialType` errors that runtime surfaces as a startup-failure banner deep-link.
+Creates `LLMClient` instances from model names. Constructor takes the catalog, an `AuthStore` (single credential source), and a base-URL override map. Cached as `ConcurrentHashMap<modelName, Entry(generation, client)>` — atomic `compute()` for lookup+rebuild guarantees that a credential rotation never returns a stale client (factory consults `authStore.generation(provider)` and rebuilds when it changes). Routes purely on `entry.provider`: `OPENAI_API` (`ApiType.RESPONSE` → `OpenAIResponseClient`, `ApiType.CHAT` → `ChatCompletionClient`); `OPENROUTER`/`OTHER` → `ChatCompletionClient` with `authStore.requireApiKey(provider)` (OTHER additionally hard-requires non-blank `entry.baseUrl` and throws `MissingCredential(OTHER)` otherwise, so a malformed synth entry can't leak the user's key to api.openai.com); `OPENAI_CODEX` → `CodexResponseClient` with `headerSupplier = { authStore.codexHeaders(LLMProvider.OPENAI_CODEX) }`; `LOCAL_LFM` is rejected by the factory and constructed directly via `LFMLLMClient(context)` in `SessionLlmBootstrapper`. `requireApiKey` throws typed `MissingCredential` / `WrongCredentialType` errors that runtime surfaces as a startup-failure banner deep-link.
 
 ## Session Bootstrap
 
@@ -133,7 +133,7 @@ Fallback: if `llm_models.json` missing/malformed, uses built-in catalog (`glm-5`
 
 ## Supporting Files
 
-**InsecureSslConfig** (`debug/llm/InsecureSslConfig.kt`): SSL bypass for debug builds when emulator clock is frozen (AndroidWorld eval). Trust-all manager + no-op certificate validation. Compile-time debug-only — release source set has a no-op stub that returns null.
+**InsecureSslConfig** (`debug/llm/InsecureSslConfig.kt` and `release/llm/InsecureSslConfig.kt`): SSL bypass for debug builds when emulator clock is frozen (AndroidWorld eval). Debug source set has a trust-all manager + no-op certificate validation. Release source set has a no-op stub (null trust manager + null factory) plus `validateBaseUrl()` that rejects any non-HTTPS base URL override.
 
 **LlmLogger**: Debug logging for LLM I/O. **LeapFunctionInterop**: OpenAI ↔ Leap tool schema adapters. **ChatCompletionInterop.extractStringContent**: Typed text extraction from `EasyInputMessage.Content`. **ToolParameterExtractor**: Shared tool parameter extraction from FunctionTool schema. **LocalLlmSemantics**: Declares Leap backend limitations (role dropping, random IDs, no correlation, content flattening).
 
@@ -151,9 +151,16 @@ llm/
 ├── ChatCompletionClient.kt   # Chat Completions API
 ├── ChatCompletionInterop.kt  # Type conversion
 ├── LFMLLMClient.kt           # Local LFM (Leap SDK)
-├── InsecureSslConfig.kt      # SSL bypass (debug source set only; release stub returns null)
 ├── LLMClientFactory.kt       # Catalog-driven client creation
-├── ModelCatalog.kt            # Model definitions
+├── LLMProvider.kt            # Flat provider enum + AuthMode
+├── ModelCatalog.kt           # Model definitions
+├── ModelCatalogRepository.kt # Seed + synth + discovered overlay
+├── ModelDiscovery.kt         # {baseUrl}/models discovery
+├── ModelDiscoveryCache.kt    # Cached discovery JSON
+├── ModelIdValidator.kt       # ModelId rules for discovered entries
+├── OtherBaseUrlValidator.kt  # OTHER baseUrl validation
+├── ContextWindowClassifier.kt
+├── ContextWindowExceededException.kt
 ├── CloudLlmRetry.kt          # Non-streaming retry
 ├── CloudStreamRetryPolicy.kt # Streaming retry policy
 ├── CloudStreamRetryRunner.kt # Streaming retry scaffold
@@ -162,6 +169,10 @@ llm/
 ├── LocalLLMConfig.kt         # Local model config
 ├── ToolParameterExtractor.kt # Shared tool param extraction
 └── LeapFunctionInterop.kt    # OpenAI ↔ Leap adapters
+
+# Build-variant source sets:
+debug/llm/InsecureSslConfig.kt    # Trust-all bypass for emulator clock skew
+release/llm/InsecureSslConfig.kt  # No-op stub + HTTPS-only validateBaseUrl
 ```
 
 ## Related Docs

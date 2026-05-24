@@ -58,7 +58,7 @@ echo 'OPENAI_API_KEY=sk-your-key' > .env
 ./scripts/setup.sh
 
 # 3. Run a test
-./scripts/debug-run.sh --basic "Open Settings"
+./scripts/debug-run.sh "Open Settings"
 ```
 
 ### Using Local LLM (On-Device)
@@ -123,7 +123,7 @@ What is and isn't covered:
 - `app/src/androidTest/kotlin/ai/closepaw/qa/` — Compose UI behavior guards across Chat, SmartCapsule, Settings (45 tests as of 2026-04-17). Layout is flat, files grouped by area (`ChatHeaderTest`, `CapsuleInputTest`, `SettingsLlmAuthTest`, ...). No Robot pattern, no annotations, no base classes.
 - `eval/` — AndroidWorld-style agent benchmarks (separate Python harness, see `/autotune`).
 
-Design rules: `projects/active/qa_test/final/cn/design_kiss.md`. Add new tests when adding behavior or fixing bugs — don't wait for bugs to grow guards.
+Design rules: `projects/archive/20260423_qa-test/final/cn/design_kiss.md`. Add new tests when adding behavior or fixing bugs — don't wait for bugs to grow guards.
 
 Critical pitfall: **never use Kotlin built-in `assert(...)` for verdicts** in androidTest — it's a no-op without `-ea` and silently passes. Use `org.junit.Assert.assertTrue` / `assertEquals` or Compose's `onNode(...).assertExists()` / `assertCountEquals(...)`.
 
@@ -165,14 +165,14 @@ SMART mode still asks for approval before `browser_script` runs against Chrome.
 > **AOSP emulator note:** Chrome stable on AOSP defaults to `chromium-enable-devtools-remote =
 > false` in `Local State`, which disables the `chrome_devtools_remote` socket entirely. Apply the
 > chrome://flags Local State unlock procedure in
-> `projects/active/browser/cn/diag_20260503_emu_chrome_devtools.md` once before expecting CDP to
+> `projects/archive/20260506_browser/cn/diag_20260503_emu_chrome_devtools.md` once before expecting CDP to
 > work on the emulator. Real devices (e.g. nubia P0110) do not need this.
 
 ### Prompt Ownership
 
 When tuning the agent's cognition, edit the narrowest owner:
 
-- Core cross-tool behavior: `agent/definition/StandaloneAgentDef.kt` and `PlannerAgentDef.kt`
+- Core cross-tool behavior: `agent/definition/DefaultAgentDef.kt` (the single Default role used by both main and subagent runtimes)
 - Tool-local semantics: tool `description` strings in `tool/impl/*.kt`
 - App-specific guidance: `app/src/main/assets/app_skills/<package>/SKILL.md`
 
@@ -188,9 +188,7 @@ Run the agent with a goal. `debug-run.sh` captures screenshots at each turn, rec
 ```bash
 ./scripts/debug-run.sh "Open Settings"                        # Default OpenAI backend
 ./scripts/debug-run.sh --local "Open Settings"                # Use local LLM
-./scripts/debug-run.sh --basic "Open Chrome"                  # Standalone execution mode
-./scripts/debug-run.sh --pro "Open Chrome"                    # Planner+executor mode
-./scripts/debug-run.sh --main-model gpt-5.2 --executor-model glm-4.7 "Open Chrome" # Custom models
+./scripts/debug-run.sh --main-model gpt-5.2 "Open Chrome"     # Override main model
 ./scripts/debug-run.sh --perception accessibility_only "Open Chrome" # Explicit perception mode
 ./scripts/debug-run.sh --accessibility-only "Open Chrome"     # A11y only
 ./scripts/debug-run.sh --screenshot-only "Open Chrome"        # Screenshot only
@@ -199,9 +197,11 @@ Run the agent with a goal. `debug-run.sh` captures screenshots at each turn, rec
 ```
 
 Output in `debug-output/run_<timestamp>/`:
-- `turn_N.png` - Screenshot at each turn
-- `turn_N_log.txt` - Log excerpt per turn
-- `agent.log` - Full agent log
+- `turn_NNN_n<turn>.png` - Screenshot at each captured turn-start
+- `turn_NNN_n<turn>_log.txt` - Log excerpt around that turn
+- `logcat_full.log` - Raw logcat stream
+- `agent.log` - Filtered agent log
+- `system.log` - Filtered system/service log
 - `trace/` - JSONL trace + replay artifacts
 
 See [Visual Debug Guide](visual_debug_guide.md) for systematic debugging workflow.
@@ -303,21 +303,7 @@ LLM_BACKEND=local ./scripts/debug-run.sh "Open Settings"
 
 ### Agent Execution Mode
 
-Select runtime orchestration mode with either flags or env var:
-
-```bash
-# one-off
-./scripts/debug-run.sh --basic "Open Settings"
-./scripts/debug-run.sh --pro "Check notifications"
-
-# persistent default
-echo 'AGENT_MODE=basic' >> .env
-```
-
-| Mode | Behavior |
-|------|----------|
-| `pro` (default) | Planner main agent + delegated executor |
-| `basic` | Standalone main agent executes UI actions directly |
+Unified agent mode: a single Default agent role handles both main and subagent runtimes (the legacy `AgentMode` enum and `--basic`/`--pro` / `AGENT_MODE` switches were removed). Multi-agent execution is exposed through the `delegate_task` tool rather than a global mode flag — see `doc/main/agent/multiagent.md`.
 
 ### Perception Mode
 
@@ -395,4 +381,4 @@ Use `eval/.venv/bin/python` for eval commands. Config override files are deep-me
 
 ## Inspection Tool (Replay v2)
 
-Web-based trace viewer: `./inspection_tool/serve.sh` → [http://localhost:8000](http://localhost:8000). Step-by-step replay with screenshots, a11y trees, tool calls, and token stats.
+Web-based trace viewer: from `inspection_tool/`, run `uv run uvicorn server:app --reload` → [http://localhost:8000](http://localhost:8000). Step-by-step replay with screenshots, a11y trees, tool calls, and token stats. See `inspection_tool/README.md`.

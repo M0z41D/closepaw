@@ -37,6 +37,9 @@ doc/main/
 ├── infra/             # Agent infrastructure
 │   ├── session.md     # AgentSession, SessionServices, lifecycle
 │   ├── tools.md       # Tool system, ToolRouter, ToolRegistry, PolicyEngine
+│   ├── tool/          # Per-tool deep dives
+│   │   ├── mobile_action.md
+│   │   └── click_transport_experiment.md
 │   ├── browser.md     # browser_script runtime, session ownership, policy
 │   ├── platform.md    # AndroidPlatform, AccessibilityPlatform, action dispatch
 │   ├── virtual_display.md # VirtualDisplayPlatform, ShizukuClient, hybrid surface
@@ -83,7 +86,9 @@ doc/main/
 │   ├── onboarding_apikey_step.md # ApiKeyStepState (manual + OAuth)
 │   ├── onboarding_demo_step.md   # DemoStepState
 │   ├── onboarding_permission_step.md # PermissionStepState
-│   └── onboarding_step_states.md # Why 3 hierarchies are kept (KISS rationale)
+│   ├── onboarding_step_states.md # Why 3 hierarchies are kept (KISS rationale)
+│   ├── ui_capsule.md         # Smart Capsule FSM cross-reference
+│   └── ui_chat.md            # Chat surface FSM cross-reference
 │
 ├── error_handling.md  # Error patterns + silent-failure inventory
 ├── data_schemas.md    # Core schemas + redundancy findings

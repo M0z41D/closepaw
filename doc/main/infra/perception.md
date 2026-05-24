@@ -196,7 +196,7 @@ Snapshot-shaping knobs inside the a11y pipeline:
 - `PromptBuilder` and `TurnPlanningPhaseRunner` inject `Perceptor.toPromptJson(snapshot)` into the turn prompt or history only when `PerceptionConfig.capturesAccessibility` is true.
 - `ObservationBuilder` uses the same prompt JSON after tool execution; in screenshot-only mode it emits a placeholder string instead of a fake tree.
 - `UiChangeDetector` includes `textEnriched` and `keyboardVisible` in snapshot fingerprints.
-- `ScreenSummary.toSummary()` produces a compact, intentionally lossy summary for history and observations.
+- `ScreenSnapshot.toSummary()` produces a compact, intentionally lossy summary for history and observations.
 
 ### Security Masking
 

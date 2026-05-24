@@ -18,7 +18,6 @@ data class SessionConfig(
     val traceRunId: String? = null,
     val perceptionConfig: PerceptionConfig = PerceptionConfig.DEFAULT,
     val mainModel: String = "glm-5",
-    val subagentModel: String? = null,
     val platformMode: PlatformMode = PlatformMode.ACCESSIBILITY,
     val excludedTools: Set<String> = emptySet(),
     val evalTurnBudget: Int? = null
@@ -29,8 +28,7 @@ data class SessionConfig(
 |---------|---------|-------------|
 | `actionDelayMs` | 2000 | Delay after actions for UI settle |
 | `approvalMode` | `SMART` | `ALWAYS_ASK` / `AUTO_APPROVE` / `SMART` |
-| `mainModel` | `glm-5` | Model for the main agent |
-| `subagentModel` | null | Model for delegated subagents (falls back to `mainModel`) |
+| `mainModel` | `glm-5` | Model for the main agent (subagents inherit this) |
 | `traceEnabled` | false | Persist full JSONL trace events/artifacts |
 | `platformMode` | `ACCESSIBILITY` | `ACCESSIBILITY` or `VIRTUAL_DISPLAY` |
 | `excludedTools` | empty | Tool names to exclude (e.g., for eval) |

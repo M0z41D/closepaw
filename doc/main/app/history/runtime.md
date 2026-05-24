@@ -76,7 +76,7 @@ agent retries compaction on the next turn with the supplement included.
 
 `downgradeOldScreens()` runs on every `addItem`/`recordItems` that introduces a
 new `SCREEN_OBSERVATION`. All but the last `HistoryConfig.recentFullScreens`
-(default 3) screen messages get rewritten to `"Screen: N elements (compressed)"`
+(default 2) screen messages get rewritten to `"Screen: N elements (compressed)"`
 or `"Screen: screenshot only (compressed)"`. This is free, deterministic, and
 keeps the per-turn growth at ~275 tokens instead of ~4 K for a full a11y JSON.
 
