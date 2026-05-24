@@ -3,8 +3,8 @@
 
 Scans eval/results/*/per_task.jsonl, builds a task × run matrix.
 Writes:
-  doc/autotune/meta/scoreboard.json  (SOT)
-  doc/autotune/meta/scoreboard.md   (rendered view)
+  projects/autotune/meta/scoreboard.json  (SOT)
+  projects/autotune/meta/scoreboard.md   (rendered view)
 
 Usage:
   python scripts/scoreboard.py [--run-id <id>[,<id>...]]
@@ -18,7 +18,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_DIR = REPO_ROOT / "eval" / "results"
-OUTPUT_DIR = REPO_ROOT / "doc" / "autotune" / "meta"
+OUTPUT_DIR = REPO_ROOT / "projects" / "autotune" / "meta"
 
 
 def load_runs(run_ids: list[str] | None = None) -> dict:

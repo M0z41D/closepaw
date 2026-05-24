@@ -41,4 +41,4 @@ Eval tasks are training data, not the final target.
 
 **The generalization test**: A well-generalized app skill should let a user say "delete duplicate recipes" or "add expenses from a note" and get useful guidance — without the skill assuming specific data shapes, counts, or comparison algorithms.
 
-**Acceptable regressions**: If the only fix for a failing eval task would reintroduce eval-specific content (solver algorithms, task-specific patterns), accept the regression rather than compromise generalization. Document in `doc/autotune/round_N/issues.md`.
+**Acceptable regressions**: If the only fix for a failing eval task would reintroduce eval-specific content (solver algorithms, task-specific patterns), accept the regression rather than compromise generalization. Document in `projects/autotune/round_N/issues.md`.

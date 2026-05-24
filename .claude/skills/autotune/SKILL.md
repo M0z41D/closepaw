@@ -20,7 +20,7 @@ One full fix → eval → analyze round.
 - **Manual mode**: default for standalone `/autotune`. Do one round, update `loop_state.json` with `status: "waiting_review"` and `last_round.recommended_action: "wait_human"`, then stop for human review.
 - **Orchestrated mode**: only when invoked from `/autotune-loop`. Do the same round work, update `loop_state.json` with the round verdict, and return control to the loop controller.
 
-Invocation context decides the mode. Do not infer orchestrated behavior from a stale `doc/autotune/meta/loop_state.json` alone.
+Invocation context decides the mode. Do not infer orchestrated behavior from a stale `projects/autotune/meta/loop_state.json` alone.
 
 ## Loop
 
@@ -49,7 +49,7 @@ Selection rules:
 3. (Optional) **Stuck tasks**: Re-test only if you have a new idea and the change still passes the shared tuning principles.
 4. **Budget**: ~5-10 tasks normally, up to 20 for regression sweeps.
 
-Use `doc/autotune/meta/scoreboard.json` to judge whether a targeted retry is still productive.
+Use `projects/autotune/meta/scoreboard.json` to judge whether a targeted retry is still productive.
 
 Subtract `eval/config/cannot_handle_group.txt`. Write the selected tasks to `eval/config/autotune_round_N.txt`.
 
@@ -82,19 +82,19 @@ All analysis in Step 4 reads from local `eval/results/`. If you skip this pull, 
 
 ### Step 4 — Analyze
 
-**All analysis artifacts MUST be written locally** (not on the remote). The analysis writes to `doc/autotune/round_N/` and `doc/autotune/meta/` — these must end up in the local repo for commit. If running analysis from the local machine (normal case), this happens automatically. Do NOT skip writing per-task analysis or the common problems summary.
+**All analysis artifacts MUST be written locally** (not on the remote). The analysis writes to `projects/autotune/round_N/` and `projects/autotune/meta/` — these must end up in the local repo for commit. If running analysis from the local machine (normal case), this happens automatically. Do NOT skip writing per-task analysis or the common problems summary.
 
 For each task in the run (**MUST use a separate subagent per task** for cleaner context — do NOT analyze multiple tasks in one agent):
-1. Run `/cog-tune` (eval entry). **MUST read the cog-tune/SKILL.md, and follow "Inspect cognition step-by-step" section steps**. Write per-task analysis to `doc/autotune/round_N/<run_id>/per_task/<TaskName>_<agent>.md` following the template `assets/per_task_analysis_template.md`.
-2. Append a short entry to `doc/autotune/meta/per_task/<TaskName>_<agent>.md` — score, turns, one-line behavior delta vs previous run. Newest on top.
+1. Run `/cog-tune` (eval entry). **MUST read the cog-tune/SKILL.md, and follow "Inspect cognition step-by-step" section steps**. Write per-task analysis to `projects/autotune/round_N/<run_id>/per_task/<TaskName>_<agent>.md` following the template `assets/per_task_analysis_template.md`.
+2. Append a short entry to `projects/autotune/meta/per_task/<TaskName>_<agent>.md` — score, turns, one-line behavior delta vs previous run. Newest on top.
 
 Once done with all tasks:
-3. Summarize into `doc/autotune/round_N/<run_id>/common_problems_<agent>.md` following `assets/common_problems_template.md`. Must include a `## Next Steps` section.
-4. Run `python3.12 scripts/scoreboard.py` to regenerate `doc/autotune/meta/scoreboard.json` and `doc/autotune/meta/scoreboard.md`.
-5. Run `python3.12 scripts/token_counts.py` to regenerate `doc/autotune/meta/token_counts.json` and `doc/autotune/meta/token_counts.md`.
-6. Append to `doc/autotune/meta/changelog.md`.
-7. Update `doc/autotune/meta/issues.md` (new issues, resolved issues, parked tasks).
-8. Update `doc/autotune/meta/loop_state.json` as the final control-plane handoff for this round.
+3. Summarize into `projects/autotune/round_N/<run_id>/common_problems_<agent>.md` following `assets/common_problems_template.md`. Must include a `## Next Steps` section.
+4. Run `python3.12 scripts/scoreboard.py` to regenerate `projects/autotune/meta/scoreboard.json` and `projects/autotune/meta/scoreboard.md`.
+5. Run `python3.12 scripts/token_counts.py` to regenerate `projects/autotune/meta/token_counts.json` and `projects/autotune/meta/token_counts.md`.
+6. Append to `projects/autotune/meta/changelog.md`.
+7. Update `projects/autotune/meta/issues.md` (new issues, resolved issues, parked tasks).
+8. Update `projects/autotune/meta/loop_state.json` as the final control-plane handoff for this round.
 
 Escalate to `/double-design` only when at least one of these is true:
 - The same task cluster has failed for 2+ rounds with no progress.
@@ -105,7 +105,7 @@ Note: <agent> = your name, e.g., claude, codex (do your analysis independently, 
 
 ## Loop State Contract
 
-`doc/autotune/meta/loop_state.json` is the only control-plane file for the current loop.
+`projects/autotune/meta/loop_state.json` is the only control-plane file for the current loop.
 
 - In **manual mode**, set `status` to `waiting_review`, keep `mode` as `manual`, and set `last_round.recommended_action` to `wait_human`.
 - In **orchestrated mode**, write the round verdict into `last_round` and return. `/autotune-loop` decides whether to continue or stop.
@@ -127,13 +127,13 @@ Wait for approval before the next `/autotune`.
 ## Key Files
 
 - Design: `doc/todo/0.01_autotune/design.md`
-- Scoreboard (SOT): `doc/autotune/meta/scoreboard.json`
-- Scoreboard (view): `doc/autotune/meta/scoreboard.md`
-- Loop state: `doc/autotune/meta/loop_state.json`
-- Global issues: `doc/autotune/meta/issues.md`
-- Changelog: `doc/autotune/meta/changelog.md`
-- Per-task changelogs: `doc/autotune/meta/per_task/<TaskName>.md`
-- Per-round analysis: `doc/autotune/round_N/<run_id>/`
+- Scoreboard (SOT): `projects/autotune/meta/scoreboard.json`
+- Scoreboard (view): `projects/autotune/meta/scoreboard.md`
+- Loop state: `projects/autotune/meta/loop_state.json`
+- Global issues: `projects/autotune/meta/issues.md`
+- Changelog: `projects/autotune/meta/changelog.md`
+- Per-task changelogs: `projects/autotune/meta/per_task/<TaskName>.md`
+- Per-round analysis: `projects/autotune/round_N/<run_id>/`
 - Task universe: `eval/config/aw_fullset.txt`
 - Exclusions: `eval/config/cannot_handle_group.txt`
 - Scoreboard script: `scripts/scoreboard.py`

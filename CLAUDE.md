@@ -14,7 +14,7 @@ AI-powered Android automation using accessibility services. Kotlin/Jetpack Compo
 **Architecture Docs**: `doc/main/`
 **Dev Workflow**: `doc/dev/development.md`
 **Termux Shell**: `termux_shell` joins the agent tool roster when F-Droid Termux is installed, enabled, and bridge-ready. See `doc/main/app/termux_shell.md`.
-**Project docs**: `projects/active/` (active work), `projects/archive/` (historical), `doc/archive/`, `doc/autotune/` — symlinked from the sibling private `closepaw-projects` repo, commit separately.
+**Project docs**: `projects/active/` (active work), `projects/archive/` (historical), `projects/autotune/` (autotune rounds) — symlinked from the sibling private `closepaw-projects` repo, commit separately.
 
 ## Critical Rules
 

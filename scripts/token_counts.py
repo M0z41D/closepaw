@@ -7,8 +7,8 @@ Extracts text from:
   3. App skills: app/src/main/assets/app_skills/*/SKILL.md
 
 Outputs:
-  doc/autotune/meta/token_counts.json  (SOT)
-  doc/autotune/meta/token_counts.md    (rendered view)
+  projects/autotune/meta/token_counts.json  (SOT)
+  projects/autotune/meta/token_counts.md    (rendered view)
 
 Token counting: tiktoken (o200k_base, gpt-4o family) if available, else chars / 4.
 
@@ -30,7 +30,7 @@ except ImportError:
     _USE_TIKTOKEN = False
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OUTPUT_DIR = REPO_ROOT / "doc" / "autotune" / "meta"
+OUTPUT_DIR = REPO_ROOT / "projects" / "autotune" / "meta"
 
 AGENT_DEF = REPO_ROOT / "app/src/main/kotlin/ai/closepaw/agent/definition/StandaloneAgentDef.kt"
 TOOL_DIR = REPO_ROOT / "app/src/main/kotlin/ai/closepaw/tool/impl"

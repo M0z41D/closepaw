@@ -3,9 +3,9 @@
 
 ## Step 1: One-time setup
 
-1. **Read prior context**: `doc/autotune/round_41/prompt_optimization_goal.md`, `doc/autotune/meta/loop_state.json`, and per-task files for all 20 tasks in `doc/autotune/meta/per_task/*.md`.
-2. **Read tuning principles**: `doc/autotune/meta/tuning_principles.md`.
-3. **Update `doc/autotune/meta/loop_state.json`**: new loop `full_pass`, R44+, status active, backlog `eval/config/autotune_round_44.txt`.
+1. **Read prior context**: `projects/autotune/round_41/prompt_optimization_goal.md`, `projects/autotune/meta/loop_state.json`, and per-task files for all 20 tasks in `projects/autotune/meta/per_task/*.md`.
+2. **Read tuning principles**: `projects/autotune/meta/tuning_principles.md`.
+3. **Update `projects/autotune/meta/loop_state.json`**: new loop `full_pass`, R44+, status active, backlog `eval/config/autotune_round_44.txt`.
 4. **Verify remote parallel env**:
    ```bash
    ssh qiguo@desktop 'echo ok'
@@ -22,7 +22,7 @@
 Must read:
 - /autotune skill steps to follow exactly, e.g., do not skip Step 4.
 - MUST read tuning_principles.md before every change.
-- Per-task files in doc/autotune/meta/per_task/*.md for diagnosis context.
+- Per-task files in projects/autotune/meta/per_task/*.md for diagnosis context.
 Task list: eval/config/autotune_round_44.txt (20 tasks).
 Goal: all 20 tasks pass. Your goal is to pass all 20, sometimes later round may pick a smaller subset, do not only pick failed tasks from there, and call it done. You will decide your group from the original 20 tasks, and their follow-up rounds successes (check scoreboard.json). Do NOT stop until at least 18 out of 20 passes. Each of this task has past before based on scoreboard. Adimittly a couple of them were borderline pass or based on overfitted app skill prompt, but majority should be passable with prompts following the tuning principles. 
 
@@ -38,10 +38,10 @@ Track token counts each round. Keep prompts generalizable.
 
 ## Step 1: One-time setup
 
-1. **Read goal + starting point**: `doc/autotune/round_41/prompt_optimization_goal.md` and `doc/autotune/round_41/starting_point.md`.
-2. **Read trace-verified analysis**: `doc/autotune/round_39/r39_failure_analysis.md` and Codex review `doc/autotune/round_39/r39_failure_analysis_review_codex.md`.
-3. **Read per-task files** for all failing tasks: `doc/autotune/meta/per_task/*.md`.
-4. **Update `doc/autotune/meta/loop_state.json`**: new loop `success_rate_recovery`, R41+, status active.
+1. **Read goal + starting point**: `projects/autotune/round_41/prompt_optimization_goal.md` and `projects/autotune/round_41/starting_point.md`.
+2. **Read trace-verified analysis**: `projects/autotune/round_39/r39_failure_analysis.md` and Codex review `projects/autotune/round_39/r39_failure_analysis_review_codex.md`.
+3. **Read per-task files** for all failing tasks: `projects/autotune/meta/per_task/*.md`.
+4. **Update `projects/autotune/meta/loop_state.json`**: new loop `success_rate_recovery`, R41+, status active.
 5. **Prepare task list**: `eval/config/aw_fullset.txt` minus `eval/config/cannot_handle_group.txt` (OsmAnd×2 only).
 6. **Verify remote parallel env**:
    ```bash
@@ -58,8 +58,8 @@ Track token counts each round. Keep prompts generalizable.
 /ralph-loop:ralph-loop "Run /autotune-loop --remote --parallel 2.  One round per iteration. Model: gpt-5.4.
 Must read:
 - /autotune skill steps to follow exactly, e.g., do not skip Step 4.
-- Goal: doc/autotune/round_41/prompt_optimization_goal.md.
-- Start: doc/autotune/round_41/starting_point.md.
+- Goal: projects/autotune/round_41/prompt_optimization_goal.md.
+- Start: projects/autotune/round_41/starting_point.md.
 - MUST read tuning_principles.md before every change.
 Process: add-back phase. Apply targeted general additions, eval, analyze. Revert what doesn't help.
 Track token counts each round.
@@ -70,8 +70,8 @@ Stop when all historically-passing tasks pass again (or remaining failures justi
 
 ## (Done) Step 1: One-time setup
 
-1. **Read goal + starting point**: `doc/autotune/round_39/prompt_optimization_goal.md` and `doc/autotune/round_39/starting_point.md`.
-2. **Update `doc/autotune/meta/loop_state.json`**: new loop `prompt_optimization`, R39+, status active.
+1. **Read goal + starting point**: `projects/autotune/round_39/prompt_optimization_goal.md` and `projects/autotune/round_39/starting_point.md`.
+2. **Update `projects/autotune/meta/loop_state.json`**: new loop `prompt_optimization`, R39+, status active.
 3. **Prepare task list**: `eval/config/aw_fullset.txt` minus `eval/config/cannot_handle_group.txt` → `eval/config/autotune_round_39.txt`.
 
 ## (Done) Step 2: Ralph loop (completed R39-R40, stop_success)
@@ -95,9 +95,9 @@ Total impacted: 29 tasks (minus cannot_handle). Run all 29.
 
 ## (Done) Step 1: One-time setup
 
-1. **Create `doc/autotune/round_36/generalization_plan.md`**: document which sections in each skill are overfitted and what to remove/rewrite. This is the input for R36's fix step.
+1. **Create `projects/autotune/round_36/generalization_plan.md`**: document which sections in each skill are overfitted and what to remove/rewrite. This is the input for R36's fix step.
 2. **Create `eval/config/generalize_active.txt`**: all 29 impacted tasks.
-3. **Update `doc/autotune/meta/loop_state.json`**: new loop `skill_generalization`, R36+, status active.
+3. **Update `projects/autotune/meta/loop_state.json`**: new loop `skill_generalization`, R36+, status active.
 4. **Push to remote**: `git push`, then on desktop: `git pull && ./gradlew assembleDebug`.
 
 ### Task list (29 tasks)
@@ -134,7 +134,7 @@ RetroPlaylistDuration
 RetroSavePlaylist
 ```
 
-## (Done) Step 2: Ralph loop (completed R36-R38, see doc/autotune/round_38/r36-38_summary.md)
+## (Done) Step 2: Ralph loop (completed R36-R38, see projects/autotune/round_38/r36-38_summary.md)
 
 # (Done) R31+: Unpark Round 2 (corrected root causes)
 
@@ -143,16 +143,16 @@ RetroSavePlaylist
 Already done in this session:
 - `eval/config/unpark_active.txt` — 8 tasks (Tier 1-3 from post-R30 deep dive)
 - `eval/config/cannot_handle_group.txt` — MarkorTranscribeVideo + OsmAndTrack only
-- `doc/autotune/meta/loop_state.json` — status: active, next_round: 31, loop_name: unpark_cannot_handle_r2
-- `doc/autotune/meta/unpark_triage.md` — corrected root causes with specific fixes per task
+- `projects/autotune/meta/loop_state.json` — status: active, next_round: 31, loop_name: unpark_cannot_handle_r2
+- `projects/autotune/meta/unpark_triage.md` — corrected root causes with specific fixes per task
 
 ## Step 2: Ralph loop (copy-paste this)
 
 /ralph-loop:ralph-loop "Run /autotune-loop. Follow /autotune-loop and /autotune steps exactly — do NOT skip steps (especially /autotune step 4 analysis).
 
 Context:
-- 9 tasks in eval/config/unpark_active.txt. Corrected root causes in doc/autotune/meta/unpark_triage.md.
-- doc/autotune/meta/loop_state.json initialized (R31+, unpark_cannot_handle_r2).
+- 9 tasks in eval/config/unpark_active.txt. Corrected root causes in projects/autotune/meta/unpark_triage.md.
+- projects/autotune/meta/loop_state.json initialized (R31+, unpark_cannot_handle_r2).
 - Prior loop R22-R30 misdiagnosed 3+ tasks. This round has specific, verified fixes per task.
 - OsmAnd map data (Liechtenstein_europe.obf) has been fixed via prepare_baseline re-run. Snapshot now includes it.
 
