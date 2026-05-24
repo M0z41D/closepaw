@@ -16,9 +16,9 @@ ClosePaw is an AI-powered Android agent — give natural language instructions, 
 ## What it does
 
 - Natural-language task execution on Android (e.g. "Open Settings and turn on Bluetooth")
-- Screen perception via the Android accessibility service — no rooting, no screen scraping hacks
-- Multiple LLM backends: OpenAI, OpenRouter, Novita
-- **Smart Capsule** — a floating overlay that lets you launch and watch tasks without leaving your current app
+- Screen perception via the Android accessibility service — no rooting, no screen scraping hacks; optional point-in-time screenshots in screenshot/hybrid perception modes
+- Multiple LLM backends: OpenAI (API key or ChatGPT sign-in), OpenRouter, or any OpenAI-compatible endpoint (base URL + key)
+- **Smart Capsule** — a floating overlay that lets you launch and watch tasks without leaving your current app, including optional voice dictation via Android `SpeechRecognizer`
 - ReAct-style agent loop with optional `delegate_task` subagent delegation, todo + scratchpad context hygiene, and cross-session memory
 
 ## Quick Start
@@ -26,7 +26,7 @@ ClosePaw is an AI-powered Android agent — give natural language instructions, 
 ### Prerequisites
 
 - Android device or emulator running **API 31+** (Android 12 or later)
-- An **OpenAI**, **OpenRouter**, or **Novita** API key
+- An **OpenAI** or **OpenRouter** API key (or any OpenAI-compatible endpoint configured under "Other")
 - JDK 17 and the Android SDK if you're building from source
 
 ### Build & Install
@@ -52,7 +52,7 @@ High-level layers:
 - **Agent loop** — ReAct turn engine, optional `delegate_task` subagent delegation, todo + scratchpad state, cross-session memory
 - **Tools** — accessibility actions, browser scripting, optional Termux shell bridge
 - **Platforms** — `AccessibilityPlatform` for normal use, `VirtualDisplayPlatform` (Shizuku) for hybrid background sessions
-- **LLM** — pluggable clients (OpenAI / OpenRouter / Novita), model catalog, retry infrastructure
+- **LLM** — pluggable clients (OpenAI / OpenRouter / OpenAI-compatible "Other" endpoints), model catalog, retry infrastructure
 
 Full design docs live under [`doc/main/`](doc/main/README.md). Start there for the agent loop, tool system, and protocol contracts.
 
@@ -63,7 +63,7 @@ Full design docs live under [`doc/main/`](doc/main/README.md). Start there for t
 This app requires the Android accessibility service to read screen content and dispatch gestures on your behalf. That is genuinely powerful access, so please understand what's being granted before enabling it.
 
 <!-- TODO(publish-privacy-policy): replace this paragraph with a link to the hosted Privacy Policy once published. -->
-A formal Privacy Policy will be linked here. In the meantime, the accessibility service is used solely to perceive on-screen content and execute the actions required by the task you typed; LLM requests are sent to whichever provider you configured. No analytics or telemetry are collected by the app itself.
+A formal Privacy Policy will be linked here. In the meantime: the accessibility service is used solely to perceive on-screen content and execute the actions required by the task you typed; LLM requests are sent to whichever provider you configured; the microphone is only used while you're actively dictating via the Smart Capsule. No third-party analytics or telemetry are collected by the app. Session traces and debug logs (which may include screenshots and the text you typed) are written only to on-device storage and can be cleared from Settings.
 
 ## Contributing
 
