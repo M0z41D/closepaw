@@ -148,3 +148,11 @@ export/
 .claude/skills/app-store-screenshots/
 .claude/skills/app-store-screenshots-spec/
 .claude/skills/nano-banana-aso/
+
+# Satellite repo (closepaw-projects) — symlinked from ../closepaw-projects
+# Contains project tasks, agent traces, autotune data. Not for public release.
+# (No trailing slash so the patterns also match the symlinks themselves.)
+projects
+doc/archive
+doc/autotune
+.claude/projects
