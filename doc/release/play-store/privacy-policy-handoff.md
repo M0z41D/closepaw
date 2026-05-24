@@ -11,13 +11,12 @@ This repository now contains a Google Play privacy policy for ClosePaw and a Git
 
 ## Required owner steps
 
-1. Replace the placeholder contact email `ai.closepaw.privacy@gmail.com` in `PRIVACY_POLICY.md` and `doc/release/privacy/index.md` with the real privacy contact email before publishing.
-2. Push these changes to the `main` branch.
-3. In GitHub repository settings, enable Pages and select GitHub Actions as the Pages source.
-4. Wait for the `Deploy Privacy Policy` workflow to complete.
-5. Verify this URL resolves publicly: `https://imoonkey.github.io/closepaw/privacy/`
-6. Paste that URL into the Google Play Console Privacy Policy field.
-7. Complete the Play Console Data Safety form consistently with the policy: no ClosePaw server-side collection, no tracking, no telemetry, no analytics, and user-directed screen-content transfer only to the selected LLM provider during active tasks.
+1. Push these changes to the `main` branch.
+2. In GitHub repository settings, enable Pages and select GitHub Actions as the Pages source.
+3. Wait for the `Deploy Privacy Policy` workflow to complete.
+4. Verify this URL resolves publicly: `https://imoonkey.github.io/closepaw/privacy/`
+5. Paste that URL into the Google Play Console Privacy Policy field.
+6. Complete the Play Console Data Safety form consistently with the policy: no ClosePaw server-side collection, no tracking, no telemetry, no analytics, and user-directed screen-content transfer only to the selected LLM provider during active tasks.
 
 Resulting public URL: `https://imoonkey.github.io/closepaw/privacy/`
 
