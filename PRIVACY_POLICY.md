@@ -40,6 +40,26 @@ On your device, ClosePaw may retain local settings and provider credentials unti
 
 Third-party LLM providers may have their own retention practices for requests sent to them. Review your selected provider's privacy policy and account settings for details.
 
+## How to delete your data
+
+Because ClosePaw stores everything locally on your device and does not operate a backend, you can delete your data at any time without contacting the developer. All deletion is immediate and final — there is no retention period.
+
+In-app deletion (granular):
+
+- **Provider credentials and API keys** — `Settings → LLM Auth → Sign out` (for OAuth) or clear the API key field (for paste-key providers). Encrypted credentials are removed from local storage.
+- **Session history and local traces** — `Settings → Permissions & Advanced → Clear session history` and `Clear debug traces`. Removes recorded task transcripts, on-device debug screenshots, and tool-call logs.
+- **Memory files** — `Settings → Memory Files`, select a file, tap delete. Removes any agent memory entries you have saved.
+
+Full deletion (one tap):
+
+- Open Android `Settings → Apps → ClosePaw → Storage → Clear data`. This removes all credentials, history, traces, memory, and settings simultaneously.
+- Uninstalling ClosePaw also deletes all local app data.
+
+What is deleted vs. kept:
+
+- **Deleted:** all data created by your use of the app, stored on the device — credentials, history, traces, memory, settings.
+- **Not in ClosePaw's control:** copies of prompts and screen content that you sent to your chosen third-party LLM provider during prior tasks. To delete those, use the provider's account dashboard (OpenAI, OpenRouter, Anthropic, etc.).
+
 ## Children
 
 ClosePaw is not directed to children under 13. The app is intended for users who can understand that it reads screen content and sends task context to their chosen LLM provider during active task execution.
