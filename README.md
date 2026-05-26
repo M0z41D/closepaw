@@ -167,6 +167,12 @@ Good first contributions: new tools (look at how `termux_shell` and `browser_scr
 
 Found a vulnerability? Please **do not** open a public issue. See [SECURITY.md](SECURITY.md) for the private disclosure process.
 
+## ⚠️ Disclaimer
+
+ClosePaw is an autonomous AI agent that takes real actions on your phone — taps, swipes, typing, sending messages, completing purchases. **AI agents make mistakes.** They misread screens, misinterpret instructions, send things to the wrong person, or persist past the intended goal. ClosePaw ships guardrails (per-app approval, hard-blocked sensitive apps, pause / takeover from the Smart Capsule), but no guardrail is perfect. **Watch what the agent does on anything that touches money, communication, or anything irreversible — and take over the moment something looks off.**
+
+This is open-source software provided **as-is** under the [Apache 2.0 License](LICENSE) (Sections 7–8: no warranties, no liability). You assume all risk and responsibility for actions the agent takes on your behalf.
+
 ## 📜 License
 
 Licensed under the [Apache License, Version 2.0](LICENSE). See [NOTICE](NOTICE) for attribution and the bundled [open-source license inventory](app/src/main/assets/open_source_licenses.json) for third-party components.
