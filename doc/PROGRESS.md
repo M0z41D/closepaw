@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-05-26: Native a11y scroll visualizer trail
+
+**What changed:**
+- `AccessibilityPlatform` now emits a scroll visualizer trail for `UIAction.ScrollNodeAt` before invoking the native accessibility scroll action.
+- Added `ScrollVisualizationGeometry` to compute a short canonical trail from scroll content direction, matching existing semantics (`down` means finger moves up).
+- Added JVM coverage for scroll visualization direction mapping, edge clamping, and unknown-direction no-op behavior.
+
+**Why:**
+- Scroll gesture fallback already produced visible feedback, but successful native a11y scrolls had no trail, making the agent look idle during scroll actions.
+- Reusing `showScrollAsSwipe()` keeps the implementation small and consistent with existing visualizer rendering.
+
+**Key files:** `AccessibilityPlatform.kt`, `ScrollVisualizationGeometry.kt`, `ScrollVisualizationGeometryTest.kt`, `doc/main/infra/platform.md`, `doc/main/ui/overlay.md`
+**Verification:** `./gradlew testDebugUnitTest --tests ai.closepaw.platform.ScrollVisualizationGeometryTest`, `./gradlew testDebugUnitTest --tests ai.closepaw.tool.action.ScrollExecutorTest`, `./gradlew assembleDebug testDebugUnitTest`, `./gradlew lintDebug`
+**Commit:** Pending.
+**Next:** Optional on-device QA can capture a successful native scroll in a genuinely scrollable screen.
+**Blockers:** None.
+
 ## 2026-05-20: Approval mode selector, settings reorder & copy audit
 
 **What changed:**

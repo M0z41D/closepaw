@@ -341,6 +341,7 @@ class AccessibilityPlatform(
                     )
             is UIAction.ScrollNodeAt -> {
                 recordOutOfBoundsActionTarget("scroll_node", action.x, action.y)
+                showScrollVisualization(action)
                 nodeActionPerformer.performScrollAt(action.x, action.y, action.direction)
             }
             is UIAction.Swipe -> performSwipe(action)
@@ -461,6 +462,25 @@ class AccessibilityPlatform(
     }
 
     // ===== Action Helpers =====
+    private fun showScrollVisualization(action: UIAction.ScrollNodeAt) {
+        val visualizer = visualizer ?: return
+        val trail =
+                ScrollVisualizationGeometry.compute(
+                        x = action.x,
+                        y = action.y,
+                        direction = action.direction,
+                        display = getDisplayInfo()
+                )
+                        ?: return
+        visualizer.showScrollAsSwipe(
+                startX = trail.startX,
+                startY = trail.startY,
+                endX = trail.endX,
+                endY = trail.endY,
+                durationMs = trail.durationMs
+        )
+    }
+
     private suspend fun performSwipe(action: UIAction.Swipe): ActionResult {
         val display = withContext(Dispatchers.Main) { getDisplayInfo() }
         val maxX = (display.widthPixels - 1).coerceAtLeast(0)

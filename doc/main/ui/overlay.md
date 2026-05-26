@@ -1,7 +1,7 @@
 # Overlay System
 
 > Smart Capsule, Edge Glow, Status Island, Action Visualizer, and mode-aware overlay branching.
-> Last updated: 2026-05-15 (action visualizer restored for VD and direct debug-action paths)
+> Last updated: 2026-05-26 (a11y scroll visualizer trail)
 
 ## Overview
 
@@ -21,7 +21,7 @@ The overlay system provides visual feedback and interaction when the agent execu
 
 `ActionVisualizer` is on-demand rather than a persistent branch in this table: platform action
 dispatchers call it directly for click/tap/long-press/swipe feedback in both Accessibility and
-Virtual Display modes.
+Virtual Display modes, plus native a11y scroll trails in Accessibility mode.
 
 ### MainActivity Lifecycle Gate
 
@@ -118,11 +118,12 @@ Visual feedback for agent touch actions. Canvas-based with automatic item lifeti
 |------|-----------|
 | **Click ripple** | 8→48dp expansion, 500ms, blue/purple at 60% opacity |
 | **Swipe trail** | 4dp line + dots, gesture duration + 400ms, light blue/indigo at 50% |
+| **Scroll trail** | Same trail renderer as swipe, using secondary color and canonical scroll-direction geometry |
 
 API: `showClick(x, y, longPress)`, `showSwipe(...)`, `showScrollAsSwipe(...)`.
 
 Call sites:
-- `AccessibilityPlatform` shows node click/long-click feedback and `AccessibilityGestureInjector` shows tap/long-press/swipe feedback.
+- `AccessibilityPlatform` shows node click/long-click feedback, native a11y scroll trails, and `AccessibilityGestureInjector` shows tap/long-press/swipe feedback.
 - `VirtualDisplayPlatform` mirrors the same feedback before Shizuku-backed tap/long-press/swipe injection and before VD node click/long-click.
 - `DebugActionExecutor` uses the service visualizer so `scripts/action-test.sh` captures the same user-visible feedback as the agent path.
 

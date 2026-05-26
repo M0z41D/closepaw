@@ -1,7 +1,7 @@
 # Platform Abstraction
 
 > AndroidPlatform, action execution, capture wiring, and virtual display support.
-> Last updated: 2026-05-15 (action visualizer wiring restored across Accessibility, VD, and debug action paths)
+> Last updated: 2026-05-26 (a11y scroll visualizer trail)
 
 ## AndroidPlatform
 
@@ -58,9 +58,11 @@ Each `UIAction` variant maps to **exactly one** Android API call. Zero strategy 
 | `SystemButton` | ENTER via `NodeActionPerformer`, others via gesture |
 | `Wait` | `delay(durationMs)` |
 
-Visualizer feedback: node click/long-click trigger `showClick()` before executing. Gesture
-tap/long-press/swipe feedback is emitted by `AccessibilityGestureInjector`, which also uses
-`OverlayTouchGate` to make overlays pass through during `dispatchGesture()`.
+Visualizer feedback: node click/long-click trigger `showClick()` before executing. Node scroll
+actions trigger a canonical `showScrollAsSwipe()` trail before executing `ACTION_SCROLL_*`, with
+direction mapped to the matching finger movement (`down` content scroll draws an upward trail).
+Gesture tap/long-press/swipe feedback is emitted by `AccessibilityGestureInjector`, which also
+uses `OverlayTouchGate` to make overlays pass through during `dispatchGesture()`.
 
 ### OverlayTouchGate
 

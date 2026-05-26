@@ -257,7 +257,7 @@ Deep dive:
 | long_press | `LongClickNodeAt(x,y)` | `LongPressAt(x,y,ms)` (semantic targets only) | Failed with trail |
 | type (with target) | `SetTextOnNodeAt(x,y)` | `TapAt` → `SetTextOnFocused` | Failed with trail |
 | type (no target) | `SetTextOnFocused` | — | Failed |
-| scroll | `ScrollNodeAt(x,y,direction)` | `Swipe(center→edge)` | Failed with trail |
+| scroll | `ScrollNodeAt(x,y,direction)` (scroll trail) | `Swipe(center→edge)` | Failed with trail |
 | swipe | `Swipe(start,end)` | — | Failed |
 
 **Node-first priority** (click, long_press, scroll): Accessibility node actions are attempted first because they are more reliable with semantic targets (text/element_index). Gesture injection is the fallback for coordinate-only targets or when node lookup fails.
