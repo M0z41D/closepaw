@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-05-26: Targeting priority normalization + GPT-5.5 Codex seed
+
+**What changed:**
+- `mobile_action` targeting semantics now treat mixed selectors as priority-normalized input (`element_index` > `text` > `x/y`) instead of rejecting semantic combos.
+- `TargetResolver` no longer returns `Ambiguous` when a semantic target resolves but coordinate hint lies outside bounds; semantic resolution wins and hint is ignored unless semantic lookup fails.
+- Added/updated unit coverage across `MobileActionTool`, `TargetResolver`, `ClickExecutor`, and `ScrollExecutor` for the new mixed-selector and outside-hint behavior.
+- Added `gpt-5.5-codex` to `llm_models.json` so GPT-5.5 has parity between `OPENAI_API` and `OPENAI_CODEX` seed entries.
+
+**Why:**
+- Codex can emit multiple targeting fields in a single call; strict mutual-exclusion and outside-hint ambiguity created avoidable failures despite a resolvable semantic target.
+- Model catalog should keep OAuth/API-key OpenAI variants aligned for the same model generation.
+
+**Key files:** `app/src/main/kotlin/ai/closepaw/tool/impl/MobileActionTool.kt`, `app/src/main/kotlin/ai/closepaw/tool/action/TargetResolver.kt`, `app/src/test/kotlin/ai/closepaw/tool/impl/MobileActionToolTest.kt`, `app/src/test/kotlin/ai/closepaw/tool/action/TargetResolverTest.kt`, `app/src/test/kotlin/ai/closepaw/tool/action/ClickExecutorTest.kt`, `app/src/test/kotlin/ai/closepaw/tool/action/ScrollExecutorTest.kt`, `app/src/main/assets/llm_models.json`, `doc/main/infra/tool/mobile_action.md`, `doc/main/infra/tools.md`, `doc/main/infra/llm.md`
+**Verification:** `./gradlew testDebugUnitTest --tests 'ai.closepaw.tool.impl.MobileActionToolTest' --tests 'ai.closepaw.tool.action.TargetResolverTest' --tests 'ai.closepaw.tool.action.ClickExecutorTest' --tests 'ai.closepaw.tool.action.ScrollExecutorTest'`
+**Commit:** This follow-up.
+**Next:** Optional: run `./gradlew assembleDebug lintDebug` before release cut.
+**Blockers:** None.
+
 ## 2026-05-26: Avoid duplicate scroll visualizer trails
 
 **What changed:**

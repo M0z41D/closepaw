@@ -215,20 +215,19 @@ class MobileActionToolTest {
     }
 
     @Test
-    fun `click element_index plus text is invalid`() {
+    fun `click element_index plus text is valid and uses element target`() {
         val tool = MobileActionTool()
         val params = JSONObject()
             .put("action", "click")
             .put("element_index", 1)
             .put("text", "Save")
 
-        val result = tool.validate(params)
-        assertThat(result).isInstanceOf(ValidationResult.Invalid::class.java)
-        assertThat((result as ValidationResult.Invalid).errors.joinToString()).contains("ONE semantic target")
+        assertThat(tool.validate(params)).isEqualTo(ValidationResult.Valid)
+        assertThat(tool.createInvocation(params).getDescription()).contains("element 1")
     }
 
     @Test
-    fun `click element_index plus text plus xy is invalid`() {
+    fun `click element_index plus text plus xy is valid and uses element target`() {
         val tool = MobileActionTool()
         val params = JSONObject()
             .put("action", "click")
@@ -237,9 +236,8 @@ class MobileActionToolTest {
             .put("x", 100)
             .put("y", 200)
 
-        val result = tool.validate(params)
-        assertThat(result).isInstanceOf(ValidationResult.Invalid::class.java)
-        assertThat((result as ValidationResult.Invalid).errors.joinToString()).contains("ONE semantic target")
+        assertThat(tool.validate(params)).isEqualTo(ValidationResult.Valid)
+        assertThat(tool.createInvocation(params).getDescription()).contains("element 1")
     }
 
     @Test
@@ -295,6 +293,34 @@ class MobileActionToolTest {
     }
 
     @Test
+    fun `scroll element_index plus text plus xy is valid`() {
+        val tool = MobileActionTool()
+        val params = JSONObject()
+            .put("action", "scroll")
+            .put("direction", "down")
+            .put("element_index", 1)
+            .put("text", "Messages")
+            .put("x", 540)
+            .put("y", 1200)
+
+        assertThat(tool.validate(params)).isEqualTo(ValidationResult.Valid)
+        assertThat(tool.createInvocation(params).getDescription()).contains("element 1")
+    }
+
+    @Test
+    fun `type element_index plus text plus input_text is valid`() {
+        val tool = MobileActionTool()
+        val params = JSONObject()
+            .put("action", "type")
+            .put("element_index", 1)
+            .put("text", "Search")
+            .put("input_text", "hello")
+
+        assertThat(tool.validate(params)).isEqualTo(ValidationResult.Valid)
+        assertThat(tool.createInvocation(params).getDescription()).contains("element 1")
+    }
+
+    @Test
     fun `scroll bare xy with no semantic target is invalid`() {
         val tool = MobileActionTool()
         val params = JSONObject()
@@ -309,10 +335,10 @@ class MobileActionToolTest {
     }
 
     @Test
-    fun `description string contains semantic-primary and coordinate-hint wording`() {
+    fun `description string contains target priority and coordinate-hint wording`() {
         val description = MobileActionTool().description
 
-        assertThat(description).contains("semantic target is primary")
-        assertThat(description).contains("fallback hint")
+        assertThat(description).contains("element_index is primary")
+        assertThat(description).contains("fallback coordinate hint")
     }
 }

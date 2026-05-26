@@ -18,10 +18,10 @@ import org.json.JSONObject
  * Implements ToolSpec directly. No base class, no ActionHandler indirection.
  * Validation is inline; execution is delegated to per-action executors.
  *
- * Targeting: semantic targets (element_index, text) are mutually exclusive.
- * x/y may accompany a semantic target as a fallback coordinate hint; the
- * semantic target stays canonical. Bare x/y is allowed for click/long_press/
- * type, but scroll rejects it because scroll is area-based.
+ * Targeting is canonicalized by priority: element_index, then text, then x/y.
+ * Extra target fields are treated as hints. x/y may accompany a semantic
+ * target as a fallback coordinate hint. Bare x/y is allowed for click/
+ * long_press/type, but scroll rejects it because scroll is area-based.
  */
 class MobileActionTool : ToolSpec {
 
@@ -30,7 +30,7 @@ class MobileActionTool : ToolSpec {
     override val description: String = """
 Perform touch interactions on the device screen.
 
-Targeting (click, long_press, type): prefer exactly one target — element_index (preferred), text, or x/y coordinates. If both a semantic target (element_index or text) and x/y are supplied, the semantic target is primary and x/y is treated only as a fallback hint. element_index and text are mutually exclusive.
+Targeting (click, long_press, type): prefer element_index, then text, then x/y coordinates. If multiple target fields are supplied, element_index is primary, text is a label hint, and x/y is only a fallback coordinate hint.
 
 Actions:
 - click: Tap element
@@ -103,7 +103,7 @@ Actions:
     // Validation: canonical target normalization
     // ============================================================
     //
-    // Semantic targets (element_index, text) are mutually exclusive.
+    // Targets are canonicalized by priority: element_index, then text, then x/y.
     // x/y may accompany a semantic target as a fallback coordinate hint.
     // Bare x/y is allowed for click/long_press/type, but not for scroll.
 
@@ -114,11 +114,6 @@ Actions:
         val hasText = params.optString("text", "").trim().isNotEmpty()
         val hasAnyCoord = params.has("x") || params.has("y")
 
-        if (hasElement && hasText) {
-            return ValidationResult.Invalid(
-                "$action accepts only ONE semantic target. Got: element_index and text"
-            )
-        }
         if (!hasElement && !hasText && !hasAnyCoord && required) {
             return ValidationResult.Invalid(
                 "$action requires one of: element_index, text, or x/y coordinates"
@@ -127,7 +122,7 @@ Actions:
 
         validateElementIndex(params)?.let { return it }
         validateCoordinates(params, action)?.let { return it }
-        if (params.has("text_index") && !hasText) {
+        if (params.has("text_index") && !hasText && !hasElement && !hasAnyCoord) {
             return ValidationResult.Invalid("text_index requires text")
         }
 
@@ -161,11 +156,6 @@ Actions:
         val hasText = params.optString("text", "").trim().isNotEmpty()
         val hasAnyCoord = params.has("x") || params.has("y")
 
-        if (hasElement && hasText) {
-            return ValidationResult.Invalid(
-                "scroll accepts only ONE semantic target. Got: element_index and text"
-            )
-        }
         // Scroll is area-based; bare coordinates have no scrollable to operate on.
         if (hasAnyCoord && !hasElement && !hasText) {
             return ValidationResult.Invalid(
@@ -175,7 +165,7 @@ Actions:
 
         validateElementIndex(params)?.let { return it }
         validateCoordinates(params, "scroll")?.let { return it }
-        if (params.has("text_index") && !hasText) {
+        if (params.has("text_index") && !hasText && !hasElement) {
             return ValidationResult.Invalid("text_index requires text")
         }
         return ValidationResult.Valid
@@ -296,11 +286,11 @@ Actions:
             })
             put("element_index", JSONObject().apply {
                 put("type", "integer")
-                put("description", "Index from current screen state. Used for click/long_press/type targeting, or to target a scrollable container for scroll.")
+                put("description", "Index from current screen state. Primary target when supplied, including when text/x/y are also present.")
             })
             put("text", JSONObject().apply {
                 put("type", "string")
-                put("description", "Target element by visible text. Use text_index for disambiguation.")
+                put("description", "Target element by visible text. Used when element_index is absent; otherwise treated as a label hint.")
             })
             put("text_index", JSONObject().apply {
                 put("type", "integer")

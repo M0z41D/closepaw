@@ -190,12 +190,12 @@ known OEM limitations.
 
 ### Canonical Targeting + Coordinate Hint
 
-For targeted actions (`click`, `long_press`, `type` with target), each call has **one canonical semantic target**:
-- `element_index` — index from current screen state (preferred)
-- `text` + optional `text_index` — visible text on screen
-- `x`, `y` — absolute pixel coordinates (last resort)
+For targeted actions (`click`, `long_press`, `type` with target), each call has canonical targeting priority:
+- `element_index` — primary when present
+- `text` + optional `text_index` — used when `element_index` is absent
+- `x`, `y` — last-resort coordinate target
 
-`element_index` and `text` are mutually exclusive. `x`/`y` may accompany a semantic target as a **coordinate hint** (semantic stays canonical, hint is fallback evidence). Hint inside resolved bounds → execute semantic; hint outside → `Ambiguous` failure before dispatch; semantic miss + hint → coordinate fallback with warning.
+`x`/`y` may accompany semantic targeting as a **coordinate hint**. Semantic resolution is still primary: if semantic resolves, execute semantic; if semantic misses and `x`/`y` is present, fall back to coordinates with warning.
 
 Special cases:
 - `type` allows no target (types into the currently focused field)

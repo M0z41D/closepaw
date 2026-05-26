@@ -1,7 +1,7 @@
 # mobile_action
 
 > Current deep dive for the screen-interaction tool.
-> Last updated: 2026-05-16
+> Last updated: 2026-05-26
 
 ## Purpose
 
@@ -21,15 +21,15 @@ The tool contract is defined in [MobileActionTool.kt](../../../../app/src/main/k
 
 ### Targeting model
 
-For `click`, `long_press`, and targeted `type`, the tool accepts one canonical semantic target:
+For `click`, `long_press`, and targeted `type`, targeting is canonicalized by priority:
 
-- `element_index`
-- `text` with optional `text_index`
-- `x` and `y`
+1. `element_index`
+2. `text` (with optional `text_index`)
+3. `x` and `y`
 
-`element_index` and `text` are mutually exclusive — only one semantic target is allowed.
+When multiple target fields are provided in one call, higher-priority fields stay canonical and lower-priority fields are treated as hints.
 
-`x/y` may accompany a semantic target as a **coordinate hint**. In that case the semantic target stays canonical and the hint is used only as fallback evidence (see Coordinate-hint normalization below). The bare `x/y` shape (no semantic target) is allowed for `click`, `long_press`, and `type` — it resolves to a pure coordinate target.
+`x/y` may accompany a semantic target as a **coordinate hint**. In that case the semantic target stays canonical and the hint is only fallback evidence when semantic resolution fails (see Coordinate-hint normalization below). The bare `x/y` shape (no semantic target) is allowed for `click`, `long_press`, and `type` — it resolves to a pure coordinate target.
 
 `scroll` accepts an optional semantic target (`element_index` or `text`) to scope the scroll area, and `x/y` only as a coordinate hint to that semantic target. Bare `x/y` on scroll is **rejected** because scroll is area-based, not point-based, and a hint without a semantic anchor has no scroll area to operate on.
 
@@ -37,11 +37,10 @@ For `click`, `long_press`, and targeted `type`, the tool accepts one canonical s
 
 ### Coordinate-hint normalization
 
-The Codex backend sometimes emits both a semantic target and raw coordinates in the same call, e.g. `{"action":"click","element_index":14,"x":540,"y":1230}`. The runtime normalizes this at the tool boundary:
+The Codex backend sometimes emits both semantic selectors and raw coordinates in one call, e.g. `{"action":"click","element_index":14,"text":"Save","x":540,"y":1230}`. The runtime normalizes this at the tool boundary:
 
 - The semantic target is **primary**. Execution targets the resolved semantic node, not the hint coordinate.
-- If the semantic target resolves and the hint lies **inside the resolved bounds** (strict half-open containment, matching Android `Rect.contains`: `left <= x < right && top <= y < bottom`), the call executes against the semantic target. The hint is treated as redundant evidence.
-- If the semantic target resolves but the hint lies **outside the resolved bounds**, the call fails with an `Ambiguous` result **before dispatch**. The runtime refuses to guess between contradictory selectors.
+- If the semantic target resolves, the call executes against the semantic target even when hint coordinates are outside the resolved bounds. The hint is ignored in that case; it does not create an ambiguity failure.
 - If the semantic target **does not resolve** but a hint is present, the call falls back to the coordinate with a warning attached to the success/failure message, and the resolver result is flagged `coordinateFallback=true`. For point actions (`click`, `long_press`), the fallback skips node-action channels and uses gesture channels only (there is no resolved node to dispatch against). For `type`, the fallback uses `TapAt` + `SetTextOnFocused` (skipping `SetTextOnNodeAt`).
 - If the semantic target does not resolve and no hint is present, the call fails the same way it did before this normalization.
 - `scroll` is the explicit exception: it **never uses coordinate fallback**. If the scroll's semantic target cannot resolve (or only resolves through coordinate fallback), the scroll fails outright — no synthetic bounds, no full-display fallback. Coordinate fallback to a single point has no meaningful scroll area.
@@ -54,9 +53,8 @@ The tool rejects:
 - legacy bounds selectors (`x1/y1/x2/y2`)
 - partial coordinates (only one of `x`/`y` supplied)
 - negative coordinates or `element_index`
-- both `element_index` and `text` together (with or without `x/y`)
 - bare `x/y` on `scroll`
-- `text_index` without `text`
+- `text_index` without `text` when there is no higher-priority target
 
 This keeps targeting single-path. The executor does not run cross-selector fallback.
 
@@ -178,7 +176,7 @@ Current channel order:
 1. `a11y_scroll`
 2. `gesture_swipe`
 
-If a target element is supplied (via `element_index` or `text`) and it resolves to bounds, the gesture is computed inside that area. If an explicit semantic target fails to resolve, the scroll returns `Failed` immediately — no silent fallback to full-display scroll. Only coordinate targets and no-target calls fall back to the full display area.
+If a target element is supplied (via `element_index` or `text`) and it resolves to bounds, the gesture is computed inside that area. If an explicit semantic target fails to resolve, the scroll returns `Failed` immediately — no silent fallback to full-display scroll. Only no-target calls use full-display bounds.
 
 Scroll **never uses coordinate fallback**: if the semantic target misses but a coordinate hint is present, the scroll still fails. A single hint point has no scroll area and no synthetic bounds are created from it. This is the deliberate exception to the coordinate-hint normalization described in the Contract section.
 

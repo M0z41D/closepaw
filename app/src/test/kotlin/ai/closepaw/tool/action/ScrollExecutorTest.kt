@@ -170,11 +170,12 @@ class ScrollExecutorTest {
     }
 
     @Test
-    fun `scroll element_index plus outside hint fails ambiguous without dispatch`() = runTest {
+    fun `scroll element_index plus outside hint ignores hint when element exists`() = runTest {
         val snapshot = scrollableSnapshot("Item 1")
+        val changedSnapshot = scrollableSnapshot("Item 5")
         val platform = RecordingScrollPlatform(
             actionResults = listOf(ActionResult.Success()),
-            capturedSnapshots = listOf(snapshot)
+            capturedSnapshots = listOf(snapshot, changedSnapshot)
         )
 
         val outcome = ScrollExecutor().execute(
@@ -185,10 +186,13 @@ class ScrollExecutorTest {
             isCancelled = { false }
         )
 
-        assertThat(outcome).isInstanceOf(ActionOutcome.Failed::class.java)
-        val failed = outcome as ActionOutcome.Failed
-        assertThat(failed.reason).contains("Ambiguous")
-        assertThat(platform.performedActions).isEmpty()
+        assertThat(outcome).isInstanceOf(ActionOutcome.Success::class.java)
+        assertThat(platform.performedActions).isNotEmpty()
+        val first = platform.performedActions.first()
+        if (first is UIAction.ScrollNodeAt) {
+            assertThat(first.x).isEqualTo(540)
+            assertThat(first.y).isEqualTo(1200)
+        }
     }
 
     @Test

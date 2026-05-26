@@ -507,11 +507,12 @@ class ClickExecutorTest {
     }
 
     @Test
-    fun `execute semantic plus hint outside bounds fails ambiguous without dispatch`() = runTest {
+    fun `execute semantic plus hint outside bounds ignores hint and dispatches semantic target`() = runTest {
         val snapshot = snapshotWithSingleButton()
+        val changedSnapshot = snapshotWithSingleButton(label = "Pressed")
         val platform = RecordingPlatform(
             actionResults = listOf(ActionResult.Success()),
-            capturedSnapshots = listOf(snapshot)
+            capturedSnapshots = listOf(changedSnapshot)
         )
 
         val outcome = ClickExecutor().execute(
@@ -521,10 +522,12 @@ class ClickExecutorTest {
             isCancelled = { false }
         )
 
-        assertThat(outcome).isInstanceOf(ActionOutcome.Failed::class.java)
-        val failed = outcome as ActionOutcome.Failed
-        assertThat(failed.reason).contains("Ambiguous")
-        assertThat(platform.performedActions).isEmpty()
+        assertThat(outcome).isInstanceOf(ActionOutcome.Success::class.java)
+        assertThat(platform.performedActions)
+            .containsExactly(UIAction.ClickNodeAt(150, 210, buttonHint))
+            .inOrder()
+        val success = outcome as ActionOutcome.Success
+        assertThat(success.message).doesNotContain("coordinate fallback")
     }
 
     @Test

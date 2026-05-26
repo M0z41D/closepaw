@@ -13,8 +13,8 @@ import ai.closepaw.perception.normalizeForMatching
  *
  * Pure function: no Android dependencies, no side effects.
  *
- * Semantic targets are primary. An optional coordinateHint disambiguates or
- * provides fallback when semantic resolution fails. See design_codex.md.
+ * Semantic targets are primary. An optional coordinateHint provides fallback
+ * only when semantic resolution fails. See design_codex.md.
  */
 object TargetResolver {
     sealed interface ResolveResult {
@@ -34,35 +34,20 @@ object TargetResolver {
         is Target.Coordinate -> ResolveResult.Resolved(Point(target.x, target.y))
         is Target.ElementIndex -> resolveSemantic(
             semantic = resolveElementIndex(target.index, snapshot),
-            hint = target.coordinateHint,
-            semanticLabel = "element_index ${target.index}"
+            hint = target.coordinateHint
         )
         is Target.Text -> resolveSemantic(
             semantic = resolveText(target.text, target.textIndex, snapshot),
-            hint = target.coordinateHint,
-            semanticLabel = "text \"${target.text}\" index ${target.textIndex}"
+            hint = target.coordinateHint
         )
     }
 
     private fun resolveSemantic(
         semantic: ResolveResult,
-        hint: Target.Coordinate?,
-        semanticLabel: String
+        hint: Target.Coordinate?
     ): ResolveResult {
         return when (semantic) {
-            is ResolveResult.Resolved -> {
-                if (hint == null) {
-                    semantic
-                } else if (semantic.bounds != null && !containsHalfOpen(semantic.bounds, hint)) {
-                    ResolveResult.Ambiguous(
-                        "Ambiguous target: $semanticLabel resolves to bounds " +
-                            "${semantic.bounds} but coordinate hint (${hint.x}, ${hint.y}) " +
-                            "lies outside. Refusing to guess."
-                    )
-                } else {
-                    semantic
-                }
-            }
+            is ResolveResult.Resolved -> semantic
             is ResolveResult.NotFound -> {
                 if (hint != null) {
                     ResolveResult.Resolved(
@@ -80,11 +65,6 @@ object TargetResolver {
             }
             is ResolveResult.Ambiguous -> semantic
         }
-    }
-
-    private fun containsHalfOpen(bounds: Bounds, hint: Target.Coordinate): Boolean {
-        return hint.x >= bounds.left && hint.x < bounds.right &&
-            hint.y >= bounds.top && hint.y < bounds.bottom
     }
 
     private fun resolveElementIndex(index: Int, snapshot: ScreenSnapshot?): ResolveResult {

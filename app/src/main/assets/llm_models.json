@@ -68,5 +68,12 @@
     "api": "response",
     "model_id": "gpt-5.5",
     "context_window": 400000
+  },
+  "gpt-5.5-codex": {
+    "display_name": "GPT-5.5 (ChatGPT sign-in)",
+    "provider": "OPENAI_CODEX",
+    "api": "response",
+    "model_id": "gpt-5.5",
+    "context_window": 400000
   }
 }

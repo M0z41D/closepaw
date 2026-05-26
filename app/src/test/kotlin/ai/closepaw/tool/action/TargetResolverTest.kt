@@ -215,7 +215,7 @@ class TargetResolverTest {
     }
 
     @Test
-    fun `hint at right bottom edge is outside bounds and ambiguous`() {
+    fun `outside hint is ignored when element_index resolves`() {
         val bounds = Bounds(100, 400, 500, 700)
         val snapshot = snapshotOf(element(index = 1, text = "Play", bounds = bounds))
 
@@ -224,10 +224,11 @@ class TargetResolverTest {
             snapshot
         )
 
-        assertThat(resolved).isInstanceOf(TargetResolver.ResolveResult.Ambiguous::class.java)
-        val ambig = resolved as TargetResolver.ResolveResult.Ambiguous
-        assertThat(ambig.reason).contains("Ambiguous")
-        assertThat(ambig.reason).contains("(500, 700)")
+        assertThat(resolved).isInstanceOf(TargetResolver.ResolveResult.Resolved::class.java)
+        val r = resolved as TargetResolver.ResolveResult.Resolved
+        assertThat(r.point).isEqualTo(Point(300, 550))
+        assertThat(r.coordinateFallback).isFalse()
+        assertThat(r.warnings).isEmpty()
     }
 
     @Test
@@ -276,7 +277,7 @@ class TargetResolverTest {
     }
 
     @Test
-    fun `text target with hint outside bounds is ambiguous`() {
+    fun `text target with hint outside bounds uses text match`() {
         val snapshot = snapshotOf(element(index = 1, text = "Save", bounds = Bounds(100, 400, 500, 700)))
 
         val resolved = TargetResolver.resolve(
@@ -284,7 +285,10 @@ class TargetResolverTest {
             snapshot
         )
 
-        assertThat(resolved).isInstanceOf(TargetResolver.ResolveResult.Ambiguous::class.java)
+        assertThat(resolved).isInstanceOf(TargetResolver.ResolveResult.Resolved::class.java)
+        val r = resolved as TargetResolver.ResolveResult.Resolved
+        assertThat(r.point).isEqualTo(Point(300, 550))
+        assertThat(r.coordinateFallback).isFalse()
     }
 
     @Test

@@ -1,7 +1,7 @@
 # LLM Integration
 
 > LLM clients, model catalog, streaming, and retry infrastructure.
-> Last updated: 2026-04-18 (auth-setting-cleanup: flat LLMProvider, AuthStore, header-supplier Codex)
+> Last updated: 2026-05-26 (added OPENAI_CODEX seed alias for gpt-5.5)
 
 ## Overview
 
@@ -75,6 +75,8 @@ Config: `LocalLLMConfig(modelSlug = "LFM2.5-1.2B-Instruct", quantizationSlug = "
 Catalog-driven model resolution from `assets/llm_models.json`.
 
 **ModelEntry**: `name` (stable ID), `displayName`, `provider: LLMProvider`, `api: ApiType`, `modelId` (sent to API), optional `baseUrl`/`apiKeyEnv` overrides, `supportsVision`.
+
+Seed catalog note: OpenAI models are mirrored per auth mode (API key vs ChatGPT sign-in), e.g. `gpt-5.2`/`gpt-5.2-codex`, `gpt-5.4`/`gpt-5.4-codex`, `gpt-5.5`/`gpt-5.5-codex`.
 
 **LLMProvider** (flat enum, mode encoded per entry):
 - `OPENAI_API` (mode=ApiKey, default key: `OPENAI_API_KEY`)
