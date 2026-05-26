@@ -24,6 +24,7 @@ Global rules apply (`~/.claude/CLAUDE.md`). Project-specific additions:
 - Main-safe: heavy work on `Dispatchers.IO` or `Default`
 - Accessibility: follow service best practices, handle edge cases
 - Sanitize accessibility tree data
+- Image reads: before using `view_image` on local screenshots, video frames, or montages, first downscale/compress to a small JPEG/PNG thumbnail. Do not open large raw captures directly; oversized image payloads can make the LLM API reject the request with 413 Payload Too Large.
 
 ## Agent Skills
 
