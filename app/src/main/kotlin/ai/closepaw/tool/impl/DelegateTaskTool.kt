@@ -27,9 +27,9 @@ internal class DelegateTaskTool(
 
     override val description: String =
         """
-        Delegate ONE atomic UI action to a sub-agent.
+        Delegate an isolated subtask to a sub-agent — a noisy one-shot exploration or a self-contained side-quest with a clean success criterion, whose intermediate steps would otherwise pollute your trace.
 
-        Query must be a single atomic intent: "Tap the Send button", "Scroll down", "Extract sender and subject", "Type 'hello' into search". NOT multi-step ("Open app, navigate to settings, change theme").
+        The sub-agent has the full toolset and runs to completion on its own; only a one-line summary comes back to you. Prefer inline execution when the result needs further reasoning against the same screen state. Use delegation only when the subtask is isolatable (its context does not bleed into yours) and the noise reduction outweighs the lost detail.
         """.trimIndent()
 
     override val parameterSchema: JSONObject = JSONObject().apply {
