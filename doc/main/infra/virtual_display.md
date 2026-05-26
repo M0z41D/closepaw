@@ -2,7 +2,7 @@
 
 > Shizuku-based virtual display implementation for isolated app execution.
 > -> See: [platform.md](platform.md) for AndroidPlatform interface and AccessibilityPlatform.
-> Last updated: 2026-05-15 (VD action visualizer wiring)
+> Last updated: 2026-05-26 (VD task cleanup before display release)
 
 ## Architecture
 
@@ -20,7 +20,7 @@ VirtualDisplayPlatform (orchestrator)
 ├── VirtualDisplayAppController        # App launch on VD
 ├── VirtualDisplayViewerTouchHandler   # Forward viewer touch to VD
 ├── ActionVisualizerManager            # Optional real-screen touch feedback
-└── ShizukuClient                      # Binder wrapper (IDisplayManager, IInputManager)
+└── ShizukuClient                      # Binder wrapper (display, input, activity-task)
 ```
 
 ## Lifecycle State Machine
@@ -120,6 +120,10 @@ Long-press and swipe track gesture ownership after `ACTION_DOWN`. On cancellatio
 ## Resource Cleanup
 
 - `clearCachedProxies()` called during `stop()`, binder death, and `start()` rollback
+- `stop()` resets the VD surface, removes root tasks currently on the VD display via
+  `IActivityTaskManager.getAllRootTaskInfosOnDisplay(displayId)` + `removeTask(taskId)`,
+  then releases the virtual display. Cleanup is display-scoped and best-effort; failures log
+  and teardown continues.
 - `getCurrentPackageName()` recycles root node on both platforms
 - `isKeyboardVisibleOnMainDisplay()` recycles all window objects
 - Debug screenshots capped at 20 files (both accessibility and VD paths)
@@ -136,7 +140,8 @@ Thin wrapper for privileged Shizuku binder calls:
 | `releaseVirtualDisplay(displayId)` | `IDisplayManager.releaseVirtualDisplay()` |
 | `setVirtualDisplaySurface(displayId, surface)` | `IDisplayManager.setVirtualDisplaySurface()` |
 | `injectInputEvent(event, mode)` | `IInputManager.injectInputEvent()` |
+| `removeRootTasksOnDisplay(displayId)` | `IActivityTaskManager.getAllRootTaskInfosOnDisplay()` + `removeTask()` |
 | `clearCachedProxies()` | Clears proxy provider + display transport caches |
 | `bypassHiddenApis()` | `HiddenApiBypass` for `setDisplayId()` and `ServiceManager` |
 
-Supporting files: `ShizukuServiceProxyProvider`, `ShizukuDisplayTransport`, `ShizukuInputTransport`, `ShizukuActivityLauncher`, `ShizukuShellExecutor`, `ShizukuRuntimeGateway`.
+Supporting files: `ShizukuServiceProxyProvider`, `ShizukuDisplayTransport`, `ShizukuInputTransport`, `ShizukuActivityTaskTransport`, `ShizukuActivityLauncher`, `ShizukuShellExecutor`, `ShizukuRuntimeGateway`.

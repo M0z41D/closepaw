@@ -8,10 +8,12 @@ import rikka.shizuku.SystemServiceHelper
 internal class ShizukuServiceProxyProvider {
         @Volatile private var cachedDisplayProxy: Any? = null
         @Volatile private var cachedInputProxy: Any? = null
+        @Volatile private var cachedActivityTaskProxy: Any? = null
 
         fun clear() {
                 cachedDisplayProxy = null
                 cachedInputProxy = null
+                cachedActivityTaskProxy = null
         }
 
         fun displayManagerProxy(): Any {
@@ -33,6 +35,18 @@ internal class ShizukuServiceProxyProvider {
                                 ?: throw IllegalStateException("Cannot obtain input service binder")
                 val proxy = asInterface(binder, "android.hardware.input.IInputManager\$Stub")
                 cachedInputProxy = proxy
+                return proxy
+        }
+
+        fun activityTaskManagerProxy(): Any {
+                cachedActivityTaskProxy?.let { return it }
+                val binder =
+                        SystemServiceHelper.getSystemService("activity_task")
+                                ?: throw IllegalStateException(
+                                        "Cannot obtain activity_task service binder"
+                                )
+                val proxy = asInterface(binder, "android.app.IActivityTaskManager\$Stub")
+                cachedActivityTaskProxy = proxy
                 return proxy
         }
 

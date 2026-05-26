@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-05-26: Virtual display task cleanup before release
+
+**What changed:**
+- Added a Shizuku-backed ActivityTaskManager transport for display-scoped root task cleanup.
+- `VirtualDisplayPlatform.stop()` now resets the VD surface, removes root tasks currently on the VD display, then releases the virtual display.
+- Added focused JVM coverage for transport display scoping, stop ordering, idempotency, Broken-state cleanup, and cleanup failure tolerance.
+- Follow-up review coverage now also checks invalid/empty/unexpected transport results, partial remove failures, Draining-state stop, and absence of launch/shell masking from `stop()`.
+
+**Why:**
+- Releasing a virtual display while app tasks still exist on it lets Android reparent surviving tasks to display 0. Removing only root tasks on the VD display is the canonical teardown fix without package special cases, force-stops, secondary-home launches, or foreground masking.
+
+**Key files:** `ShizukuActivityTaskTransport.kt`, `ShizukuClient.kt`, `ShizukuServiceProxyProvider.kt`, `VirtualDisplayPlatform.kt`, `ShizukuActivityTaskTransportTest.kt`, `VirtualDisplayPlatformStopTest.kt`, `doc/main/infra/virtual_display.md`, `doc/main/infra/platform.md`
+**Verification:** `./gradlew :app:testDebugUnitTest --tests 'ai.closepaw.platform.virtualdisplay.ShizukuActivityTaskTransportTest' --tests 'ai.closepaw.platform.virtualdisplay.VirtualDisplayPlatformStopTest'`, `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug`, real-device VD debug-run on `ANDROID_SERIAL=100.64.43.95:5555` in `debug-output/run_20260526_123305` (`VD task cleanup before release: displayId=115 removed=2 ok`; display 0 focused `ai.closepaw/.app.MainActivity` afterward).
+**Commit:** This follow-up.
+**Next:** Optional: investigate the OEM's transient `WindowManager onDisplayChanged` log for closing Settings after display removal; it did not move Settings to the front in validation.
+**Blockers:** None.
+
 ## 2026-05-26: Targeting priority normalization + GPT-5.5 Codex seed
 
 **What changed:**

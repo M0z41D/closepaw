@@ -79,6 +79,7 @@ class ShizukuClient {
     private val proxyProvider = ShizukuServiceProxyProvider()
     private val displayTransport = ShizukuDisplayTransport(proxyProvider)
     private val inputTransport = ShizukuInputTransport(proxyProvider)
+    private val activityTaskTransport = ShizukuActivityTaskTransport(proxyProvider)
     private val activityLauncher = ShizukuActivityLauncher()
 
     /**
@@ -112,6 +113,15 @@ class ShizukuClient {
     /** Release a virtual display. */
     fun releaseVirtualDisplay(displayId: Int) {
         displayTransport.releaseVirtualDisplay(displayId)
+    }
+
+    /**
+     * Remove root tasks currently attached to a display before releasing that display.
+     *
+     * @return number of root tasks removed, or -1 when the transport fails
+     */
+    fun removeRootTasksOnDisplay(displayId: Int): Int {
+        return activityTaskTransport.removeRootTasksOnDisplay(displayId)
     }
 
     // ── Input Injection ─────────────────────────────────────────

@@ -1,7 +1,7 @@
 # Platform Abstraction
 
 > AndroidPlatform, action execution, capture wiring, and virtual display support.
-> Last updated: 2026-05-26 (a11y scroll visualizer trail)
+> Last updated: 2026-05-26 (VD task cleanup before display release)
 
 ## AndroidPlatform
 
@@ -93,7 +93,8 @@ VD action dispatch follows the same atomic-platform rule but routes gesture acti
 `VirtualDisplayInputInjector` instead of `AccessibilityService.dispatchGesture()`. It still emits
 the shared action visualizer on the real screen before node click/long-click, tap, long-press, and
 raw swipe actions so users can see where the agent operated even though the target app lives on the
-virtual display.
+virtual display. During `stop()`, VD teardown removes root tasks currently attached to the VD
+display before releasing it so Android does not promote surviving VD app tasks onto display 0.
 
 ---
 

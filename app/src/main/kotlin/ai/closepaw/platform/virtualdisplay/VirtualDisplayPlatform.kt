@@ -230,16 +230,13 @@ class VirtualDisplayPlatform(
             // Clean up resources from Running, Draining, or Broken state
             when (previous) {
                 is VdState.Running -> {
-                    shizuku.releaseVirtualDisplay(previous.displayId)
-                    previous.imageReader.close()
+                    releaseDisplayResources(previous.displayId, previous.imageReader)
                 }
                 is VdState.Draining -> {
-                    shizuku.releaseVirtualDisplay(previous.displayId)
-                    previous.imageReader.close()
+                    releaseDisplayResources(previous.displayId, previous.imageReader)
                 }
                 is VdState.Broken -> {
-                    shizuku.releaseVirtualDisplay(previous.displayId)
-                    previous.imageReader.close()
+                    releaseDisplayResources(previous.displayId, previous.imageReader)
                 }
                 VdState.Stopped -> {} // Already handled by early return above
             }
@@ -248,6 +245,20 @@ class VirtualDisplayPlatform(
             arbiter.transitionTo(VdState.Stopped)
 
             Log.i(TAG, "Stopped")
+        }
+    }
+
+    private fun releaseDisplayResources(displayId: Int, imageReader: ImageReader) {
+        removeRootTasksBeforeRelease(displayId)
+        shizuku.releaseVirtualDisplay(displayId)
+        imageReader.close()
+    }
+
+    private fun removeRootTasksBeforeRelease(displayId: Int) {
+        try {
+            shizuku.removeRootTasksOnDisplay(displayId)
+        } catch (e: Exception) {
+            Log.w(TAG, "VD task cleanup before release failed; continuing teardown", e)
         }
     }
 
