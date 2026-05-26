@@ -341,8 +341,11 @@ class AccessibilityPlatform(
                     )
             is UIAction.ScrollNodeAt -> {
                 recordOutOfBoundsActionTarget("scroll_node", action.x, action.y)
-                showScrollVisualization(action)
-                nodeActionPerformer.performScrollAt(action.x, action.y, action.direction)
+                val result = nodeActionPerformer.performScrollAt(action.x, action.y, action.direction)
+                if (result is ActionResult.Success) {
+                    showScrollVisualization(action)
+                }
+                result
             }
             is UIAction.Swipe -> performSwipe(action)
             is UIAction.SystemButton ->

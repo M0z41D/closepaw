@@ -1,9 +1,20 @@
 # Changelog
 
+## 2026-05-26: Avoid duplicate scroll visualizer trails
+
+**What changed:**
+- `ScrollNodeAt` now draws its native scroll trail only after the a11y scroll action is accepted.
+
+**Why:**
+- Failed native scroll attempts can fall back to gesture swipe; drawing the native attempt before success produced two upward trails with different geometries.
+
+**Verification:** `./gradlew testDebugUnitTest --tests 'ai.closepaw.platform.ScrollVisualizationGeometryTest' --tests 'ai.closepaw.tool.action.ScrollExecutorTest'`, `./gradlew lintDebug`
+**Commit:** This follow-up.
+
 ## 2026-05-26: Native a11y scroll visualizer trail
 
 **What changed:**
-- `AccessibilityPlatform` now emits a scroll visualizer trail for `UIAction.ScrollNodeAt` before invoking the native accessibility scroll action.
+- `AccessibilityPlatform` now emits a scroll visualizer trail for successful `UIAction.ScrollNodeAt` native accessibility scroll actions.
 - Added `ScrollVisualizationGeometry` to compute a short canonical trail from scroll content direction, matching existing semantics (`down` means finger moves up).
 - Added JVM coverage for scroll visualization direction mapping, edge clamping, and unknown-direction no-op behavior.
 
@@ -13,8 +24,8 @@
 
 **Key files:** `AccessibilityPlatform.kt`, `ScrollVisualizationGeometry.kt`, `ScrollVisualizationGeometryTest.kt`, `doc/main/infra/platform.md`, `doc/main/ui/overlay.md`
 **Verification:** `./gradlew testDebugUnitTest --tests ai.closepaw.platform.ScrollVisualizationGeometryTest`, `./gradlew testDebugUnitTest --tests ai.closepaw.tool.action.ScrollExecutorTest`, `./gradlew assembleDebug testDebugUnitTest`, `./gradlew lintDebug`
-**Commit:** Pending.
-**Next:** Optional on-device QA can capture a successful native scroll in a genuinely scrollable screen.
+**Commit:** `40f0dd09`.
+**Next:** Optional on-device QA can capture fallback-only behavior in a non-scrollable or a11y-scroll-failing screen.
 **Blockers:** None.
 
 ## 2026-05-20: Approval mode selector, settings reorder & copy audit
