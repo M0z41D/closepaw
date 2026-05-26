@@ -341,11 +341,7 @@ class AccessibilityPlatform(
                     )
             is UIAction.ScrollNodeAt -> {
                 recordOutOfBoundsActionTarget("scroll_node", action.x, action.y)
-                val result = nodeActionPerformer.performScrollAt(action.x, action.y, action.direction)
-                if (result is ActionResult.Success) {
-                    showScrollVisualization(action)
-                }
-                result
+                nodeActionPerformer.performScrollAt(action.x, action.y, action.direction)
             }
             is UIAction.Swipe -> performSwipe(action)
             is UIAction.SystemButton ->
@@ -465,13 +461,13 @@ class AccessibilityPlatform(
     }
 
     // ===== Action Helpers =====
-    private fun showScrollVisualization(action: UIAction.ScrollNodeAt) {
+    override fun showScrollVisualization(x: Int, y: Int, direction: String) {
         val visualizer = visualizer ?: return
         val trail =
                 ScrollVisualizationGeometry.compute(
-                        x = action.x,
-                        y = action.y,
-                        direction = action.direction,
+                        x = x,
+                        y = y,
+                        direction = direction,
                         display = getDisplayInfo()
                 )
                         ?: return

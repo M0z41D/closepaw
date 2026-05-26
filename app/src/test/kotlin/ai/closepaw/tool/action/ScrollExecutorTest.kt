@@ -45,6 +45,7 @@ class ScrollExecutorTest {
                 UIAction.Swipe(540, 1200, 540, 240, 300L)
             )
             .inOrder()
+        assertThat(platform.visualizedScrolls).isEmpty()
     }
 
     @Test
@@ -136,6 +137,10 @@ class ScrollExecutorTest {
         val success = outcome as ActionOutcome.Success
         assertThat(success.verified).isTrue()
         assertThat(success.message).doesNotContain("No observable")
+        assertThat(platform.performedActions)
+            .containsExactly(UIAction.ScrollNodeAt(540, 1200, "down"))
+        assertThat(platform.visualizedScrolls)
+            .containsExactly(UIAction.ScrollNodeAt(540, 1200, "down"))
     }
 
     // ---------- Coordinate-hint normalization (Codex dual target) ----------
@@ -260,6 +265,12 @@ private class RecordingScrollPlatform(
         val result = actionResults.getOrNull(actionIndex) ?: actionResults.lastOrNull()
         actionIndex += 1
         return result ?: ActionResult.Failure("No action results configured")
+    }
+
+    val visualizedScrolls = mutableListOf<UIAction.ScrollNodeAt>()
+
+    override fun showScrollVisualization(x: Int, y: Int, direction: String) {
+        visualizedScrolls += UIAction.ScrollNodeAt(x, y, direction)
     }
 
     override fun hasRequiredPermissions(): Boolean = true

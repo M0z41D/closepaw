@@ -58,10 +58,11 @@ Each `UIAction` variant maps to **exactly one** Android API call. Zero strategy 
 | `SystemButton` | ENTER via `NodeActionPerformer`, others via gesture |
 | `Wait` | `delay(durationMs)` |
 
-Visualizer feedback: node click/long-click trigger `showClick()` before executing. Successful node
-scroll actions trigger a canonical `showScrollAsSwipe()` trail after `ACTION_SCROLL_*` is accepted,
-with direction mapped to the matching finger movement (`down` content scroll draws an upward trail).
-Gesture tap/long-press/swipe feedback is emitted by `AccessibilityGestureInjector`, which also uses
+Visualizer feedback: node click/long-click trigger `showClick()` before executing. Verified native
+scroll actions trigger a canonical `showScrollAsSwipe()` trail from `ScrollExecutor` after
+post-action change detection confirms `ACTION_SCROLL_*` succeeded, with direction mapped to the
+matching finger movement (`down` content scroll draws an upward trail). Gesture
+tap/long-press/swipe feedback is emitted by `AccessibilityGestureInjector`, which also uses
 `OverlayTouchGate` to make overlays pass through during `dispatchGesture()`.
 
 ### OverlayTouchGate

@@ -92,6 +92,14 @@ interface AndroidPlatform {
      */
     fun allowTapToFocus(): Boolean = true
 
+    /**
+     * Show visual feedback for a verified native scroll action.
+     *
+     * This is intentionally separate from [performAction]: scroll orchestration owns fallback and
+     * post-action verification, so it decides when a native scroll attempt should become visible.
+     */
+    fun showScrollVisualization(x: Int, y: Int, direction: String) {}
+
     // =========================================================================
     // App Management (P0)
     // =========================================================================
@@ -129,4 +137,3 @@ data class AppInfo(
     val label: String,
     val isSystemApp: Boolean = false
 )
-

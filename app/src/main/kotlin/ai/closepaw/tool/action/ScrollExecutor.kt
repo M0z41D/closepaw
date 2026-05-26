@@ -90,6 +90,11 @@ class ScrollExecutor(
                             when (outcome) {
                                 is ActionOutcome.Success -> {
                                     attemptTrail += "a11y_scroll: success"
+                                    platform.showScrollVisualization(
+                                        x = scrollArea.centerX,
+                                        y = scrollArea.centerY,
+                                        direction = direction
+                                    )
                                     return outcome.copy(attemptTrail = attemptTrail.toList())
                                 }
                                 is ActionOutcome.Failed -> {

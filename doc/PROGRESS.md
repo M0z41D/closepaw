@@ -3,18 +3,18 @@
 ## 2026-05-26: Avoid duplicate scroll visualizer trails
 
 **What changed:**
-- `ScrollNodeAt` now draws its native scroll trail only after the a11y scroll action is accepted.
+- `ScrollExecutor` now draws the native scroll trail only after a11y scroll is accepted and post-action change detection confirms the action succeeded.
 
 **Why:**
-- Failed native scroll attempts can fall back to gesture swipe; drawing the native attempt before success produced two upward trails with different geometries.
+- Native scroll attempts that are accepted by Android can still be treated as no-op by ClosePaw and fall back to gesture swipe; drawing the native attempt before final success produced two upward trails with different geometries.
 
-**Verification:** `./gradlew testDebugUnitTest --tests 'ai.closepaw.platform.ScrollVisualizationGeometryTest' --tests 'ai.closepaw.tool.action.ScrollExecutorTest'`, `./gradlew lintDebug`
+**Verification:** `./gradlew testDebugUnitTest --tests 'ai.closepaw.platform.ScrollVisualizationGeometryTest' --tests 'ai.closepaw.tool.action.ScrollExecutorTest'`, `./gradlew assembleDebug`, APK installed on `100.64.43.95:5555`, `debug-run` device QA in `debug-output/run_20260525_210425`, `./gradlew lintDebug`.
 **Commit:** This follow-up.
 
 ## 2026-05-26: Native a11y scroll visualizer trail
 
 **What changed:**
-- `AccessibilityPlatform` now emits a scroll visualizer trail for successful `UIAction.ScrollNodeAt` native accessibility scroll actions.
+- Native a11y scroll actions now emit a scroll visualizer trail after scroll orchestration verifies the native action succeeded.
 - Added `ScrollVisualizationGeometry` to compute a short canonical trail from scroll content direction, matching existing semantics (`down` means finger moves up).
 - Added JVM coverage for scroll visualization direction mapping, edge clamping, and unknown-direction no-op behavior.
 
