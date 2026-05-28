@@ -79,7 +79,7 @@ ClosePaw is an open-source **agent harness for Android**. Give it a natural-lang
 **Recommended — signed release APK.** Download the latest APK from [GitHub Releases](https://github.com/imoonkey/closepaw/releases) and open it on your device to install.
 
 > [!TIP]
-> **Help us ship to the Play Store sooner.** Google requires **12 closed testers active for 14 days** before we can promote to production. [Apply to join the closed-testing group](https://groups.google.com/g/closepaw-closed-testers).
+> **Help us ship to the Play Store sooner.** Google requires **12 closed testers active for 14 days** before we can promote to production. Become an authorized tester by joining the [closed-testing Google Group](https://groups.google.com/g/closepaw-closed-testers), then [join/install on Android](https://play.google.com/store/apps/details?id=ai.closepaw) or [join on the web](https://play.google.com/apps/testing/ai.closepaw). Please stay opted in for the full 14 days.
 
 **Or build from source.** Useful if you want to hack on it or run the latest unreleased changes.
 
