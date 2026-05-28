@@ -161,7 +161,7 @@ Good first contributions: new tools (look at how `termux_shell` and `browser_scr
 
   Two fix paths fork off the diagnosis: **`/prompt-tune`** applies cognition-class fixes across prompts / tool descriptions / app-skills (respecting layer ownership); **`/action-debug`** isolates execution-class failures at the action layer (baseline vs accessibility-service path). **`/ux-visual-debug`** is orthogonal — end-to-end UX QA via ADB, when the question is interaction quality rather than agent reasoning.
 
-  Both [`CLAUDE.md`](CLAUDE.md) and [`.claude/`](.claude/) are symlinked to their `AGENTS.md` / `GEMINI.md` / `.cursorrules` / `.codex/` / `.agents/` counterparts — the same skills and conventions work for most AI coding agents.
+  Both [`CLAUDE.md`](CLAUDE.md) and [`.claude/`](.claude/) are symlinked to their `AGENTS.md` / `GEMINI.md` / `.cursorrules` / `.codex/` / `.agents/` counterparts — the same project-local skills and conventions work for most AI coding agents. General skills such as `/verify` and `/coding-standards` come from the developer's global agent configuration.
 
 ## 🛡️ Security
 

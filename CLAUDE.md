@@ -31,7 +31,7 @@ Follow the configured global agent rules when available. Project-specific additi
 - `/autotune` - One eval-tune round, stops for human review
 - `/autotune-loop` - Autonomous multi-round autotune via `loop_state.json`
 - `/prompt-tune` - Apply prompt, tool, and app-skill changes per ownership layer
-- `/verify` - Build + lint + tests
+- `/verify` - Build + lint + tests (external/global skill)
 - `/build-fix` - Fix Gradle errors incrementally
 - `/tdd` - Test-driven development for core logic
 - `/code-review` - Systematic code review
@@ -40,7 +40,7 @@ Follow the configured global agent rules when available. Project-specific additi
 - `/cog-tune` - Analyze agent cognition using traces and eval results
 - `/ux-visual-debug` - End-to-end UX QA from user perspective via ADB
 - `/align` - Align design between Codex and Claude
-- `/coding-standards` - Android/Kotlin coding conventions (auto-applied)
+- `/coding-standards` - Android/Kotlin coding conventions (external/global skill)
 - `/ultra-think` - Deep strategic thinking for high-impact decisions
 - `/ralph-loop` - Start Ralph Loop (`/cancel-ralph` to stop)
 

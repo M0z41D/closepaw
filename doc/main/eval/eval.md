@@ -256,6 +256,8 @@ For long-running eval batches, a headless emulator can run on a remote machine (
 
 ### Setup
 
+- Copy `.closepaw-local.env.example` to `.closepaw-local.env` on the dev machine and set
+  `CLOSEPAW_REMOTE` / `CLOSEPAW_REMOTE_DIR` for the remote checkout.
 - `scripts/remote/provision.sh` — one-shot remote setup (JDK 17, Python 3.11, Android SDK, dual AVDs)
 - `scripts/remote/proxy_tunnel.sh` — autossh tunnel service manager (install/start/stop/status)
 - `scripts/remote/openai-proxy-tunnel.service` — systemd user unit with auto-reconnect
@@ -270,5 +272,7 @@ For long-running eval batches, a headless emulator can run on a remote machine (
 - `prepare_baseline.sh` and `eval_parallel.sh` support `--headless` flag for remote
 - Dual-emulator parallel eval: same layout as local (`AndroidWorldAvd` + `AndroidWorldAvd2`)
 - Proxy tunnel managed via autossh systemd service (sources keychain for passphrase-protected SSH keys)
+- `scripts/remote/proxy_tunnel.sh install` writes `~/.config/closepaw/proxy-tunnel.env` from
+  `CLOSEPAW_PROXY_HOST` / `CLOSEPAW_PROXY_USER` / `CLOSEPAW_PROXY_PORT` in `.closepaw-local.env`.
 
 -> See: `/autotune` skill Step 3 for remote eval operational details.

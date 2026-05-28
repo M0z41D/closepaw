@@ -59,8 +59,10 @@ Subtract `eval/config/cannot_handle_group.txt`. Write the selected tasks to `eva
 ```bash
 git push
 if [[ -f .closepaw-local.env ]]; then source .closepaw-local.env; fi
-REMOTE="${CLOSEPAW_REMOTE:-desktop}"
-REMOTE_DIR="${CLOSEPAW_REMOTE_DIR:-~/closepaw}"
+: "${CLOSEPAW_REMOTE:?Set CLOSEPAW_REMOTE in .closepaw-local.env}"
+: "${CLOSEPAW_REMOTE_DIR:?Set CLOSEPAW_REMOTE_DIR in .closepaw-local.env}"
+REMOTE="$CLOSEPAW_REMOTE"
+REMOTE_DIR="$CLOSEPAW_REMOTE_DIR"
 ssh "$REMOTE" "cd $REMOTE_DIR && git pull && ./gradlew assembleDebug"
 ```
 Skip only if this round had no code/prompt/skill changes (e.g., round 0 with no fix step). Running eval on stale code wastes an entire round.
@@ -78,8 +80,10 @@ Monitor for stalls. If a task hangs (no output for several minutes), check acces
 ```bash
 # Pull eval results from remote to local
 if [[ -f .closepaw-local.env ]]; then source .closepaw-local.env; fi
-REMOTE="${CLOSEPAW_REMOTE:-desktop}"
-REMOTE_DIR="${CLOSEPAW_REMOTE_DIR:-~/closepaw}"
+: "${CLOSEPAW_REMOTE:?Set CLOSEPAW_REMOTE in .closepaw-local.env}"
+: "${CLOSEPAW_REMOTE_DIR:?Set CLOSEPAW_REMOTE_DIR in .closepaw-local.env}"
+REMOTE="$CLOSEPAW_REMOTE"
+REMOTE_DIR="$CLOSEPAW_REMOTE_DIR"
 rsync -avz "$REMOTE:$REMOTE_DIR/eval/results/" eval/results/
 ```
 All analysis in Step 4 reads from local `eval/results/`. If you skip this pull, Step 4 will either fail or analyze stale data.

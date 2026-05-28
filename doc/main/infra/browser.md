@@ -197,4 +197,9 @@ Real-device evidence:
   agent chain through `debug-run.sh`.
 - AOSP `emulator-5556` — Phase 5 final-gate PASS via `USER_SERVICE` after the chrome://flags Local
   State unlock procedure (Chrome stable on AOSP defaults disable the DevTools socket; the
-  procedure must be applied before CDP can connect).
+  procedure must be applied before CDP can connect). On a userdebug emulator, force-stop Chrome,
+  append `enable-command-line-on-non-rooted-devices@1` to `browser.enabled_labs_experiments` in
+  Chrome's `Local State`, restore the file owner/mode/SELinux context, write
+  `/data/local/tmp/chrome-command-line` with
+  `_ --remote-debugging-socket-name=chrome_devtools_remote --enable-features=NetworkService`,
+  then cold-launch Chrome and confirm `/proc/net/unix` lists `@chrome_devtools_remote`.

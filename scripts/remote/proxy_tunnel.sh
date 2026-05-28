@@ -15,16 +15,37 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SERVICE_NAME="openai-proxy-tunnel"
 SERVICE_FILE="${SCRIPT_DIR}/${SERVICE_NAME}.service"
 USER_SERVICE_DIR="${HOME}/.config/systemd/user"
+SERVICE_ENV_DIR="${HOME}/.config/closepaw"
+SERVICE_ENV_FILE="${SERVICE_ENV_DIR}/proxy-tunnel.env"
 
 LOCAL_ENV="${CLOSEPAW_LOCAL_ENV:-$PROJECT_ROOT/.closepaw-local.env}"
 if [[ -f "$LOCAL_ENV" ]]; then
   # shellcheck source=/dev/null
   source "$LOCAL_ENV"
 fi
+if [[ -f "$SERVICE_ENV_FILE" ]]; then
+  # shellcheck source=/dev/null
+  source "$SERVICE_ENV_FILE"
+fi
 
 PROXY_HOST="${CLOSEPAW_PROXY_HOST:-${PROXY_HOST:-}}"
 PROXY_USER="${CLOSEPAW_PROXY_USER:-${PROXY_USER:-$USER}}"
 PROXY_PORT="${CLOSEPAW_PROXY_PORT:-${PROXY_PORT:-18080}}"
+
+write_service_env() {
+  if [[ -z "$PROXY_HOST" ]]; then
+    echo "[tunnel] proxy host required. Set CLOSEPAW_PROXY_HOST in .closepaw-local.env first."
+    echo "[tunnel] See .closepaw-local.env.example."
+    exit 1
+  fi
+  mkdir -p "$SERVICE_ENV_DIR"
+  umask 077
+  cat >"$SERVICE_ENV_FILE" <<EOF
+PROXY_HOST=${PROXY_HOST}
+PROXY_USER=${PROXY_USER}
+PROXY_PORT=${PROXY_PORT}
+EOF
+}
 
 usage() {
   sed -n '3,9s/^# //p' "$0"
@@ -37,11 +58,12 @@ cmd_install() {
     exit 1
   fi
   mkdir -p "${USER_SERVICE_DIR}"
+  write_service_env
   cp "${SERVICE_FILE}" "${USER_SERVICE_DIR}/${SERVICE_NAME}.service"
   systemctl --user daemon-reload
   systemctl --user enable "${SERVICE_NAME}"
   echo "[tunnel] Service installed and enabled."
-  echo "[tunnel] Configure PROXY_HOST in ~/.config/closepaw/proxy-tunnel.env before starting."
+  echo "[tunnel] Config written to ${SERVICE_ENV_FILE}."
   echo "[tunnel] Start with: $0 start"
 }
 

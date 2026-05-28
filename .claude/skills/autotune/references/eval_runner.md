@@ -39,10 +39,14 @@ git push
 
 # 2. Pull and rebuild on remote
 if [[ -f .closepaw-local.env ]]; then source .closepaw-local.env; fi
-REMOTE="${CLOSEPAW_REMOTE:-desktop}"
-REMOTE_DIR="${CLOSEPAW_REMOTE_DIR:-~/closepaw}"
+: "${CLOSEPAW_REMOTE:?Set CLOSEPAW_REMOTE in .closepaw-local.env}"
+: "${CLOSEPAW_REMOTE_DIR:?Set CLOSEPAW_REMOTE_DIR in .closepaw-local.env}"
+REMOTE="$CLOSEPAW_REMOTE"
+REMOTE_DIR="$CLOSEPAW_REMOTE_DIR"
 ssh "$REMOTE" "cd $REMOTE_DIR && git pull && ./gradlew assembleDebug"
 ```
+
+All remote commands below assume they run in that same shell after the snippet above.
 
 A stale checkout is a silent failure mode — eval runs but produces wrong results.
 

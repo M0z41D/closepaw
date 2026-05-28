@@ -163,8 +163,14 @@ make sure at least one transport is available:
 SMART mode still asks for approval before `browser_script` runs against Chrome.
 
 > **AOSP emulator note:** Chrome stable on AOSP defaults to `chromium-enable-devtools-remote =
-> false` in `Local State`, which disables the `chrome_devtools_remote` socket entirely. Apply the
-> chrome://flags Local State unlock procedure once before expecting CDP to work on the emulator.
+> false` in `Local State`, which disables the `chrome_devtools_remote` socket entirely. On a
+> userdebug emulator where `adb root` works, unlock it by force-stopping Chrome, appending
+> `enable-command-line-on-non-rooted-devices@1` to
+> `/data/data/com.android.chrome/app_chrome/Local State` under
+> `browser.enabled_labs_experiments`, restoring the file owner/mode/SELinux context, writing
+> `/data/local/tmp/chrome-command-line` with
+> `_ --remote-debugging-socket-name=chrome_devtools_remote --enable-features=NetworkService`,
+> then cold-launching Chrome and verifying `/proc/net/unix` contains `@chrome_devtools_remote`.
 > Real devices do not need this.
 
 ### Prompt Ownership
@@ -276,6 +282,20 @@ Example port allocation on the host running the proxy:
 The URL is passed as an intent extra and applied at session bootstrap via `ModelCatalog.withBaseUrlOverrides()` — no changes to `llm_models.json` needed.
 
 **Emulator note:** Emulators can't reach Tailscale. The debug build includes a `network_security_config.xml` that permits cleartext to `10.0.2.2`/`127.0.0.1`/`localhost` only. Set `OPENAI_BASE_URL=http://localhost:18080/v1` — the eval bridge auto-rewrites to `10.0.2.2`. Release builds block all cleartext.
+
+### Remote Eval Helper Config
+
+The remote helper scripts read optional machine-local settings from `.closepaw-local.env`.
+Copy `.closepaw-local.env.example` to `.closepaw-local.env` and edit it for your machines:
+
+```bash
+cp .closepaw-local.env.example .closepaw-local.env
+```
+
+`scripts/remote/sync.sh` and `scripts/remote/scrcpy.sh` use `CLOSEPAW_REMOTE` and
+`CLOSEPAW_REMOTE_DIR`. `scripts/remote/proxy_tunnel.sh install` uses
+`CLOSEPAW_PROXY_HOST`, `CLOSEPAW_PROXY_USER`, and `CLOSEPAW_PROXY_PORT`, then writes the
+systemd user service env file at `~/.config/closepaw/proxy-tunnel.env`.
 
 ### LLM Backend Selection
 
