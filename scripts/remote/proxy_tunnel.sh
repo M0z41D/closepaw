@@ -7,16 +7,24 @@
 #   ./scripts/remote/proxy_tunnel.sh stop      # stop tunnel
 #   ./scripts/remote/proxy_tunnel.sh status    # check status
 #   ./scripts/remote/proxy_tunnel.sh logs      # show recent logs
-#   ./scripts/remote/proxy_tunnel.sh manual [laptop-ip]  # run in foreground (no systemd)
+#   ./scripts/remote/proxy_tunnel.sh manual [proxy-host]  # run in foreground (no systemd)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SERVICE_NAME="openai-proxy-tunnel"
 SERVICE_FILE="${SCRIPT_DIR}/${SERVICE_NAME}.service"
 USER_SERVICE_DIR="${HOME}/.config/systemd/user"
 
-LAPTOP_IP="${LAPTOP_IP:-100.95.23.122}"
-PROXY_PORT="${PROXY_PORT:-18080}"
+LOCAL_ENV="${CLOSEPAW_LOCAL_ENV:-$PROJECT_ROOT/.closepaw-local.env}"
+if [[ -f "$LOCAL_ENV" ]]; then
+  # shellcheck source=/dev/null
+  source "$LOCAL_ENV"
+fi
+
+PROXY_HOST="${CLOSEPAW_PROXY_HOST:-${PROXY_HOST:-}}"
+PROXY_USER="${CLOSEPAW_PROXY_USER:-${PROXY_USER:-$USER}}"
+PROXY_PORT="${CLOSEPAW_PROXY_PORT:-${PROXY_PORT:-18080}}"
 
 usage() {
   sed -n '3,9s/^# //p' "$0"
@@ -33,6 +41,7 @@ cmd_install() {
   systemctl --user daemon-reload
   systemctl --user enable "${SERVICE_NAME}"
   echo "[tunnel] Service installed and enabled."
+  echo "[tunnel] Configure PROXY_HOST in ~/.config/closepaw/proxy-tunnel.env before starting."
   echo "[tunnel] Start with: $0 start"
 }
 
@@ -63,14 +72,18 @@ cmd_logs() {
 }
 
 cmd_manual() {
-  local ip="${1:-${LAPTOP_IP}}"
-  echo "[tunnel] Forwarding localhost:${PROXY_PORT} -> ${ip}:${PROXY_PORT}"
+  local host="${1:-${PROXY_HOST}}"
+  if [[ -z "$host" ]]; then
+    echo "[tunnel] proxy host required. Pass it as an argument or set CLOSEPAW_PROXY_HOST."
+    exit 1
+  fi
+  echo "[tunnel] Forwarding localhost:${PROXY_PORT} -> ${host}:${PROXY_PORT}"
   echo "[tunnel] Press Ctrl-C to stop."
   exec autossh -M 0 -N \
     -o "ServerAliveInterval 30" \
     -o "ServerAliveCountMax 3" \
     -o "ExitOnForwardFailure yes" \
-    -L "${PROXY_PORT}:127.0.0.1:${PROXY_PORT}" "qiguo@${ip}"
+    -L "${PROXY_PORT}:127.0.0.1:${PROXY_PORT}" "${PROXY_USER}@${host}"
 }
 
 case "${1:-}" in

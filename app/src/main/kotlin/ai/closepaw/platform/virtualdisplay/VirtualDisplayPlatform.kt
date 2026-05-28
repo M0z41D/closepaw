@@ -153,7 +153,7 @@ class VirtualDisplayPlatform(
             val id =
                     try {
                         shizuku.createVirtualDisplay(
-                                name = "moonkey_agent_display",
+                                name = "closepaw_agent_display",
                                 width = config.width,
                                 height = config.height,
                                 densityDpi = config.densityDpi,

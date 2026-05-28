@@ -37,9 +37,7 @@ import org.junit.Test
  *
  * These tests cover the control-plane invariants of the relay (idempotency, single-flight
  * bootstrap, per-connection thread cleanup). End-to-end fd-count assertions on the wire
- * protocol require a real device; that path is documented in
- * `projects/active/browser/cn/diag_20260503_ws_relay_stress.md` and exercised by
- * `scripts/ws-relay-stress.sh`.
+ * protocol require a real device and are exercised by `scripts/ws-relay-stress.sh`.
  */
 class WirelessAdbSelfPairTransportRelayStressTest {
 

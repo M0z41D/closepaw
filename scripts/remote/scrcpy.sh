@@ -3,7 +3,15 @@
 # Tunnels: remote adb server (5037) + scrcpy data ports (27183-27184).
 set -euo pipefail
 
-REMOTE="qiguo@desktop"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+LOCAL_ENV="${CLOSEPAW_LOCAL_ENV:-$PROJECT_ROOT/.closepaw-local.env}"
+if [[ -f "$LOCAL_ENV" ]]; then
+  # shellcheck source=/dev/null
+  source "$LOCAL_ENV"
+fi
+
+REMOTE="${CLOSEPAW_REMOTE:-desktop}"
 LOCAL_ADB_PORT=15037
 REMOTE_ADB_PORT=5037
 SCRCPY_VIDEO_PORT=27183

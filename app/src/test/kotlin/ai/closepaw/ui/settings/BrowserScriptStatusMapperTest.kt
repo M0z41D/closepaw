@@ -4,13 +4,12 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 /**
- * Covers every row of the browser_script mapping table in
- * `projects/active/tool_settings_unify/design_claude.md`. The mapper resolves four
+ * Covers every row of the browser_script mapping table. The mapper resolves four
  * observable inputs (enable pref, gate pending, gate error, CDP probe) into a single
  * [ToolStatusUi] + optional [RowAction]; mis-ordering the precedence (e.g. showing the
  * probe result while a gate error is live) is exactly the regression these tests guard.
  *
- * Design doc is the source of truth for label wording.
+ * These tests are the source of truth for label wording.
  */
 class BrowserScriptStatusMapperTest {
 

@@ -32,9 +32,7 @@ internal sealed interface VirtualDisplayRowAction {
 /**
  * Pure mapper: collapse the five observable inputs (persisted mode, effective mode, Shizuku
  * status, gate pending, gate error) into the unified card's [VirtualDisplayCardState].
- * Mapping table is the source of truth in
- * `projects/active/settings_display_perception_refresh/design_claude.md` under
- * "Status mapper — corrected table". First-match-wins.
+ * First-match-wins ordering is the source of truth.
  *
  * Invariants:
  * - `switchChecked` strictly mirrors `persistedMode == VIRTUAL_DISPLAY` — never the last

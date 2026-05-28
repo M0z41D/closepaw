@@ -14,11 +14,11 @@ AI-powered Android automation using accessibility services. Kotlin/Jetpack Compo
 **Architecture Docs**: `doc/main/`
 **Dev Workflow**: `doc/dev/development.md`
 **Termux Shell**: `termux_shell` joins the agent tool roster when F-Droid Termux is installed, enabled, and bridge-ready. See `doc/main/app/termux_shell.md`.
-**Project docs**: `projects/active/` (active work), `projects/archive/` (historical), `projects/autotune/` (autotune rounds) — symlinked from the sibling private `closepaw-projects` repo, commit separately.
+**Private workspace**: if `projects/` exists locally, treat it as ignored private agent state / artifacts. Do not link it from public repo docs.
 
 ## Critical Rules
 
-Global rules apply (`~/.claude/CLAUDE.md`). Project-specific additions:
+Follow the configured global agent rules when available. Project-specific additions:
 
 - Lifecycle-aware: no static Context refs, scope coroutines to lifecycle
 - Main-safe: heavy work on `Dispatchers.IO` or `Default`

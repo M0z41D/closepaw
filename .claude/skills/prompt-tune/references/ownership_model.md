@@ -1,6 +1,6 @@
 # Ownership Model — Decision Tree
 
-Distilled from `projects/autotune/round_4/prompt_refactor/final/design.md`.
+Distilled from the prompt refactor design notes.
 
 ## Decision Tree
 

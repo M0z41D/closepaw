@@ -3,7 +3,7 @@
  * adb pair daemon (which links the same BoringSSL implementation). Replaces the previous
  * JNI dep `MuntashirAkon/spake2-android` (LGPL-3.0). Group arithmetic via `net.i2p.crypto:eddsa`
  * (CC0); the SPAKE2 protocol itself is implemented here. See header on the upstream C source
- * and `projects/active/browser/cn/diag_20260504_spake_alternatives.md` for context.
+ * for context.
  *
  * Upstream reference: https://github.com/MuntashirAkon/spake2-c/blob/master/spake2.c
  * Algorithm (Alice; Bob symmetric with M ↔ N): generate sends Pstar = x·Base + w·M where

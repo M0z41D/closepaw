@@ -58,7 +58,10 @@ Subtract `eval/config/cannot_handle_group.txt`. Write the selected tasks to `eva
 **Pre-flight: sync & rebuild** (MANDATORY if Step 1 made any changes):
 ```bash
 git push
-ssh qiguo@desktop 'cd ~/ld-workspace/android-agent-workspace/closepaw && git pull && ./gradlew assembleDebug'
+if [[ -f .closepaw-local.env ]]; then source .closepaw-local.env; fi
+REMOTE="${CLOSEPAW_REMOTE:-desktop}"
+REMOTE_DIR="${CLOSEPAW_REMOTE_DIR:-~/closepaw}"
+ssh "$REMOTE" "cd $REMOTE_DIR && git pull && ./gradlew assembleDebug"
 ```
 Skip only if this round had no code/prompt/skill changes (e.g., round 0 with no fix step). Running eval on stale code wastes an entire round.
 
@@ -66,7 +69,7 @@ Read `references/eval_runner.md` for the exact commands for each configuration.
 
 | Flag | Effect |
 |------|--------|
-| `--remote` | Run eval on `qiguo@desktop` instead of local machine |
+| `--remote` | Run eval on the configured remote worker instead of local machine |
 | `--parallel N` | Use N emulators in parallel (currently max 2). Falls back to serial if parallel startup fails |
 
 Monitor for stalls. If a task hangs (no output for several minutes), check accessibility permission on the device. If needed, stop the runner, remove completed tasks from the config, and re-run the remainder.
@@ -74,7 +77,10 @@ Monitor for stalls. If a task hangs (no output for several minutes), check acces
 **Post-run: pull results to local** (MANDATORY for `--remote` runs):
 ```bash
 # Pull eval results from remote to local
-rsync -avz qiguo@desktop:~/ld-workspace/android-agent-workspace/closepaw/eval/results/ eval/results/
+if [[ -f .closepaw-local.env ]]; then source .closepaw-local.env; fi
+REMOTE="${CLOSEPAW_REMOTE:-desktop}"
+REMOTE_DIR="${CLOSEPAW_REMOTE_DIR:-~/closepaw}"
+rsync -avz "$REMOTE:$REMOTE_DIR/eval/results/" eval/results/
 ```
 All analysis in Step 4 reads from local `eval/results/`. If you skip this pull, Step 4 will either fail or analyze stale data.
 
@@ -82,7 +88,7 @@ All analysis in Step 4 reads from local `eval/results/`. If you skip this pull, 
 
 ### Step 4 — Analyze
 
-**All analysis artifacts MUST be written locally** (not on the remote). The analysis writes to `projects/autotune/round_N/` and `projects/autotune/meta/` — these must end up in the local repo for commit. If running analysis from the local machine (normal case), this happens automatically. Do NOT skip writing per-task analysis or the common problems summary.
+**All analysis artifacts MUST be written locally** (not on the remote). The analysis writes to the ignored local artifact workspace under `projects/autotune/round_N/` and `projects/autotune/meta/`. If running analysis from the local machine (normal case), this happens automatically. Do NOT skip writing per-task analysis or the common problems summary.
 
 For each task in the run (**MUST use a separate subagent per task** for cleaner context — do NOT analyze multiple tasks in one agent):
 1. Run `/cog-tune` (eval entry). **MUST read the cog-tune/SKILL.md, and follow "Inspect cognition step-by-step" section steps**. Write per-task analysis to `projects/autotune/round_N/<run_id>/per_task/<TaskName>_<agent>.md` following the template `assets/per_task_analysis_template.md`.
@@ -126,7 +132,6 @@ Wait for approval before the next `/autotune`.
 
 ## Key Files
 
-- Design: `doc/todo/0.01_autotune/design.md`
 - Scoreboard (SOT): `projects/autotune/meta/scoreboard.json`
 - Scoreboard (view): `projects/autotune/meta/scoreboard.md`
 - Loop state: `projects/autotune/meta/loop_state.json`

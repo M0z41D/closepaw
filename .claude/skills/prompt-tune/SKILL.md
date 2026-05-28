@@ -108,7 +108,7 @@ Before finalizing, verify:
 - `app/src/main/kotlin/ai/closepaw/tool/impl/WaitTool.kt`
 
 ### Design reference
-- Ownership model design: `projects/autotune/round_4/prompt_refactor/final/design.md`
+- Ownership model design: prompt refactor design notes
 - Shared tuning principles: `.claude/skills/autotune/references/tuning_principles.md`
 - App skill writing guide: `.claude/skills/prompt-tune/references/app_skill.md`
 

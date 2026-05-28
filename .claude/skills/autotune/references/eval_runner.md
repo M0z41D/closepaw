@@ -6,7 +6,7 @@ Commands for each run configuration. Read this file when executing Step 3 of `/a
 
 | Flag | Effect |
 |------|--------|
-| `--remote` | Run eval on `qiguo@desktop` instead of local machine |
+| `--remote` | Run eval on the configured remote worker instead of local machine |
 | `--parallel N` | Use N emulators in parallel (currently max 2). Falls back to serial if parallel startup fails |
 
 ## Default (local, single emulator)
@@ -38,7 +38,10 @@ Before running, sync code to the remote:
 git push
 
 # 2. Pull and rebuild on remote
-ssh qiguo@desktop 'cd ~/ld-workspace/android-agent-workspace/closepaw && git pull && ./gradlew assembleDebug'
+if [[ -f .closepaw-local.env ]]; then source .closepaw-local.env; fi
+REMOTE="${CLOSEPAW_REMOTE:-desktop}"
+REMOTE_DIR="${CLOSEPAW_REMOTE_DIR:-~/closepaw}"
+ssh "$REMOTE" "cd $REMOTE_DIR && git pull && ./gradlew assembleDebug"
 ```
 
 A stale checkout is a silent failure mode — eval runs but produces wrong results.
@@ -46,25 +49,25 @@ A stale checkout is a silent failure mode — eval runs but produces wrong resul
 For `gpt-*` models, ensure the SSH proxy tunnel is up (OpenRouter models don't need it):
 
 ```bash
-ssh qiguo@desktop 'cd ~/ld-workspace/android-agent-workspace/closepaw && ./scripts/remote/proxy_tunnel.sh status'
+ssh "$REMOTE" "cd $REMOTE_DIR && ./scripts/remote/proxy_tunnel.sh status"
 # If not running:
-ssh qiguo@desktop 'cd ~/ld-workspace/android-agent-workspace/closepaw && ./scripts/remote/proxy_tunnel.sh start'
+ssh "$REMOTE" "cd $REMOTE_DIR && ./scripts/remote/proxy_tunnel.sh start"
 ```
 
 Run eval:
 
 ```bash
-ssh qiguo@desktop 'cd ~/ld-workspace/android-agent-workspace/closepaw && eval/.venv/bin/python eval/aw_bridge/runner.py \
+ssh "$REMOTE" "cd $REMOTE_DIR && eval/.venv/bin/python eval/aw_bridge/runner.py \
   --config eval/config/remote.yaml \
-  --tasks-file eval/config/autotune_round_N.txt'
+  --tasks-file eval/config/autotune_round_N.txt"
 ```
 
 For long runs, use tmux to survive SSH disconnects:
 
 ```bash
-ssh qiguo@desktop 'cd ~/ld-workspace/android-agent-workspace/closepaw && ./scripts/remote/eval_tmux.sh \
-  --tasks-file eval/config/autotune_round_N.txt'
-# Reattach: ssh qiguo@desktop 'tmux attach -t eval'
+ssh "$REMOTE" "cd $REMOTE_DIR && ./scripts/remote/eval_tmux.sh \
+  --tasks-file eval/config/autotune_round_N.txt"
+# Reattach: ssh "$REMOTE" 'tmux attach -t eval'
 ```
 
 ## `--remote --parallel N`
@@ -72,9 +75,9 @@ ssh qiguo@desktop 'cd ~/ld-workspace/android-agent-workspace/closepaw && ./scrip
 Sync code first (same as `--remote` above), then:
 
 ```bash
-ssh qiguo@desktop 'cd ~/ld-workspace/android-agent-workspace/closepaw && ./scripts/eval_parallel.sh \
+ssh "$REMOTE" "cd $REMOTE_DIR && ./scripts/eval_parallel.sh \
   --headless --config eval/config/remote.yaml \
-  --tasks-file eval/config/autotune_round_N.txt'
+  --tasks-file eval/config/autotune_round_N.txt"
 ```
 
 Same parallel preconditions as local, plus `--headless` adds `-no-window -no-audio`. If parallel startup fails, fallback to single-emulator serial run.
@@ -84,7 +87,7 @@ Same parallel preconditions as local, plus `--headless` adds `-no-window -no-aud
 After any `--remote` run completes (or incrementally as tasks finish), pull results to local:
 
 ```bash
-rsync -avz qiguo@desktop:~/ld-workspace/android-agent-workspace/closepaw/eval/results/ eval/results/
+rsync -avz "$REMOTE:$REMOTE_DIR/eval/results/" eval/results/
 ```
 
 All Step 4 analysis reads from local `eval/results/`. Skipping this means analysis fails or uses stale data.
@@ -93,7 +96,7 @@ All Step 4 analysis reads from local `eval/results/`. Skipping this means analys
 
 | Problem | Fix |
 |---------|-----|
-| Tunnel dropped | `ssh qiguo@desktop './scripts/remote/proxy_tunnel.sh start'` |
+| Tunnel dropped | `ssh "$REMOTE" "cd $REMOTE_DIR && ./scripts/remote/proxy_tunnel.sh start"` |
 | Emulator hung | `adb -s emulator-5554 emu kill`, then re-run |
-| Stale checkout | `ssh qiguo@desktop 'cd ~/ld-workspace/android-agent-workspace/closepaw && git pull && ./gradlew assembleDebug'` |
+| Stale checkout | `ssh "$REMOTE" "cd $REMOTE_DIR && git pull && ./gradlew assembleDebug"` |
 | Second emulator won't start | Check `emulator -list-avds` shows `AndroidWorldAvd2` |

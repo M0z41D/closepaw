@@ -27,9 +27,6 @@
 #
 # Requires: adb, scripts/debug-run.sh on PATH (uses repo-relative path).
 #
-# Real-device runbook context: see
-# `projects/active/browser/cn/diag_20260503_ws_relay_stress.md`.
-#
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

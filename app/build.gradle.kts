@@ -28,8 +28,8 @@ android {
     }
 
     // Release signing reads from environment so the keystore + password never
-    // touch the repo. `scripts/release-build.sh` wires these from
-    // ~/secrets/closepaw/. If env is unset (e.g. local debug builds, IDE sync),
+    // touch the repo. `scripts/release-build.sh` requires the KEYSTORE_* env
+    // vars before shipping builds. If env is unset (e.g. local debug builds, IDE sync),
     // we fall back to null and the release variant simply won't be signed —
     // debug builds use Android's default debug keystore and are unaffected.
     signingConfigs {
@@ -229,7 +229,6 @@ dependencies {
     // Pure-Kotlin implementation in `wireless/Spake25519.kt` over `net.i2p.crypto:eddsa`
     // (CC0 / public domain, 25k+ Maven Central dependents) for Ed25519 group arithmetic.
     // Replaces the previous LGPL-3.0 JitPack dep `com.github.MuntashirAkon.spake2-java:spake2-android`.
-    // See `projects/active/browser/cn/diag_20260504_spake_alternatives.md`.
     implementation("net.i2p.crypto:eddsa:0.3.0")
 
     // Conscrypt — bundled (vs reflection on platform) for the TLS exporter API used by the

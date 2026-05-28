@@ -5,8 +5,6 @@
 > policy.
 > Last updated: 2026-05-04 (browser-cdp-runtime + browser-phase5/6 milestones)
 
-Design source of truth: [projects/active/browser/cn/design_codex.md](../../../projects/active/browser/cn/design_codex.md).
-
 ## Overview
 
 `browser_script` is the single agent-facing entry point for driving the user's Chrome via CDP. The tool runs
@@ -199,4 +197,4 @@ Real-device evidence:
   agent chain through `debug-run.sh`.
 - AOSP `emulator-5556` — Phase 5 final-gate PASS via `USER_SERVICE` after the chrome://flags Local
   State unlock procedure (Chrome stable on AOSP defaults disable the DevTools socket; the
-  procedure is recorded in `projects/active/browser/cn/diag_20260503_emu_chrome_devtools.md`).
+  procedure must be applied before CDP can connect).

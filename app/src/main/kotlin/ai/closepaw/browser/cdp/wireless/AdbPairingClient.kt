@@ -5,8 +5,7 @@
  *
  * SPAKE2-25519 primitive provided by `Spake25519` (in this package), a pure-Kotlin port of
  * BoringSSL `spake25519.c` over `net.i2p.crypto:eddsa` (CC0). Replaces the previous LGPL-3.0
- * JitPack dep `com.github.MuntashirAkon.spake2-java:spake2-android:2.2.1` — see
- * `projects/active/browser/cn/diag_20260504_spake_alternatives.md` for rationale.
+ * JitPack dep `com.github.MuntashirAkon.spake2-java:spake2-android:2.2.1`.
  */
 package ai.closepaw.browser.cdp.wireless
 

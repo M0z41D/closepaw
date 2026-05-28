@@ -64,7 +64,7 @@ ClosePaw is an open-source **agent harness for Android**. Give it a natural-lang
 - 🔌 **Pluggable LLM layer.** OpenAI-compatible API is the contract. ChatGPT/Codex OAuth flow built in. First-class: OpenAI, OpenRouter; or any OpenAI-compatible endpoint via the *Other* slot (Anthropic, Groq, Together, your own proxy).
 - 👁️ **Pluggable perception.** Accessibility tree by default; optional point-in-time screenshots in screenshot/hybrid modes.
 - 🔍 **Inspectable traces.** Every session writes LLM calls, tool calls, and perception snapshots to on-device storage; pull with `adb` for inspection.
-- 🔁 **Eval-driven agent-harness autotune loop.** Run an AndroidWorld task suite (`eval/`) against the agent; an autotune harness analyzes failures, proposes prompt / tool / skill fixes, and re-runs — round-over-round artifacts under [`projects/autotune/`](projects/autotune/).
+- 🔁 **Eval-driven agent-harness autotune loop.** Run an AndroidWorld task suite (`eval/`) against the agent; an autotune harness analyzes failures, proposes prompt / tool / skill fixes, and re-runs.
 
 ## 📦 Install
 
@@ -156,7 +156,7 @@ Good first contributions: new tools (look at how `termux_shell` and `browser_scr
 - **[`eval/`](eval/) and [`inspection_tool/`](inspection_tool/)** — Python eval harness (AndroidWorld bridge) and FastAPI replay viewer for `debug-output/` traces. See each folder's README.
 - **Project agent skills** in [`.claude/skills/`](.claude/skills/) — ClosePaw-specific workflows for AI coding agents. The improvement pipeline nests three layers by scope of evidence:
   - **`/cog-tune`** — *one session*. Analyze a single trace, classify the root cause as cognition or execution, propose fixes.
-  - **`/autotune`** — *one batch*. Run a curated AndroidWorld task set, apply the same diagnose-and-fix across all failures in the batch. Round artifacts under [`projects/autotune/`](projects/autotune/).
+  - **`/autotune`** — *one batch*. Run a curated AndroidWorld task set, apply the same diagnose-and-fix across all failures in the batch.
   - **`/autotune-loop`** — *many batches*. Orchestrate `/autotune` rounds unattended until convergence.
 
   Two fix paths fork off the diagnosis: **`/prompt-tune`** applies cognition-class fixes across prompts / tool descriptions / app-skills (respecting layer ownership); **`/action-debug`** isolates execution-class failures at the action layer (baseline vs accessibility-service path). **`/ux-visual-debug`** is orthogonal — end-to-end UX QA via ADB, when the question is interaction quality rather than agent reasoning.

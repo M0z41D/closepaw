@@ -26,11 +26,11 @@ All day-to-day work uses the **debug** APK. The **release** APK is only for ship
 
 ### Signed release builds (`scripts/release-build.sh`)
 
-`./gradlew assembleRelease` direct doesn't sign — `signingConfigs.create("release")` reads keystore env vars (`KEYSTORE_PATH/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD`) and gracefully falls back to `null` when they're absent (so IDE syncs don't break). The wrapper script does the env setup:
+`./gradlew assembleRelease` direct doesn't sign — `signingConfigs.create("release")` reads keystore env vars (`KEYSTORE_PATH/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD`) and gracefully falls back to `null` when they're absent (so IDE syncs don't break). The wrapper script validates that these env vars are present before shipping:
 
-- Keystore + password live at `~/secrets/closepaw/release.keystore` and `~/secrets/closepaw/release.keystore.password` (mode 600), outside the repo by design. Mirrored desktop ↔ laptop via Tailscale `scp` — both machines can sign independently.
-- `scripts/release-build.sh` sources `~/.closepaw-env` (for `JAVA_HOME` / `ANDROID_HOME` in non-interactive shells), exports the signing env from those two files, then `exec ./gradlew "$@"`.
-- New maintainer onboarding: ask the existing maintainer for the keystore + password files (or generate a fresh keystore for personal/dev work — see `projects/active/1_publish/2_release_build_claude.md`). `.gitignore` covers `*.keystore` `*.jks` `*.password`, but the canonical location is outside the repo to enforce the boundary.
+- Keep the keystore and password outside the repo, with owner-only permissions.
+- Export `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_PASSWORD` in a trusted shell before running `scripts/release-build.sh`.
+- New maintainer onboarding: get release signing material through a private credential handoff, or generate a fresh keystore for personal/dev work. `.gitignore` covers `*.keystore` `*.jks` `*.password`, but the canonical boundary is outside the repo.
 - CI publishes via `.github/workflows/release.yml` (fires on `v*` tag push; reads `KEYSTORE_BASE64` + `KEYSTORE_PASSWORD` from GitHub Secrets).
 
 **R8 keep-rule pitfalls already handled** (in `app/proguard-rules.pro` + `app/build.gradle.kts`):
@@ -123,7 +123,7 @@ What is and isn't covered:
 - `app/src/androidTest/kotlin/ai/closepaw/qa/` — Compose UI behavior guards across Chat, SmartCapsule, Settings (45 tests as of 2026-04-17). Layout is flat, files grouped by area (`ChatHeaderTest`, `CapsuleInputTest`, `SettingsLlmAuthTest`, ...). No Robot pattern, no annotations, no base classes.
 - `eval/` — AndroidWorld-style agent benchmarks (separate Python harness, see `/autotune`).
 
-Design rules: `projects/archive/20260423_qa-test/final/cn/design_kiss.md`. Add new tests when adding behavior or fixing bugs — don't wait for bugs to grow guards.
+Design rule: add tests when adding behavior or fixing bugs — don't wait for bugs to grow guards.
 
 Critical pitfall: **never use Kotlin built-in `assert(...)` for verdicts** in androidTest — it's a no-op without `-ea` and silently passes. Use `org.junit.Assert.assertTrue` / `assertEquals` or Compose's `onNode(...).assertExists()` / `assertCountEquals(...)`.
 
@@ -164,9 +164,8 @@ SMART mode still asks for approval before `browser_script` runs against Chrome.
 
 > **AOSP emulator note:** Chrome stable on AOSP defaults to `chromium-enable-devtools-remote =
 > false` in `Local State`, which disables the `chrome_devtools_remote` socket entirely. Apply the
-> chrome://flags Local State unlock procedure in
-> `projects/archive/20260506_browser/cn/diag_20260503_emu_chrome_devtools.md` once before expecting CDP to
-> work on the emulator. Real devices (e.g. nubia P0110) do not need this.
+> chrome://flags Local State unlock procedure once before expecting CDP to work on the emulator.
+> Real devices do not need this.
 
 ### Prompt Ownership
 
@@ -255,19 +254,19 @@ OPENAI_API_KEY=sk-proj-your-key-here
 
 ### Provider Base URL Override (cproxy + Tailscale)
 
-The app sets `usesCleartextTraffic="false"`, so all LLM traffic must go over HTTPS. For OPENAI-provider models routed through [cproxy](https://github.com/user/cproxy) (a local Copilot-backed proxy), use Tailscale Serve to expose cproxy over HTTPS:
+The app sets `usesCleartextTraffic="false"`, so all LLM traffic must go over HTTPS. For OPENAI-provider models routed through a local OpenAI-compatible proxy, expose that proxy over HTTPS:
 
 ```bash
-# 1. cproxy listens on localhost:18080 (see ~/workspace/cproxy/)
+# 1. The local proxy listens on localhost:18080
 
 # 2. Tailscale Serve exposes it as HTTPS on port 8741
 tailscale serve --bg --https=8741 http://127.0.0.1:18080
 
 # 3. Set the base URL in .env
-OPENAI_BASE_URL=https://laptop.tail6bd948.ts.net:8741/v1
+OPENAI_BASE_URL=https://<your-tailnet-host>:8741/v1
 ```
 
-Port allocation on `laptop.tail6bd948.ts.net`:
+Example port allocation on the host running the proxy:
 
 | Port | Target | Purpose |
 |------|--------|---------|

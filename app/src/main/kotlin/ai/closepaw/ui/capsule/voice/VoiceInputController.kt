@@ -21,7 +21,7 @@ enum class VoiceState { Idle, Listening, Stopping, Unavailable }
 
 /**
  * Drives a [Recognizer] session and surfaces a small state machine plus the partial/final
- * text-edit semantics specified in `projects/active/voice_input/design_claude.md`.
+ * text-edit semantics used by the capsule voice input UI.
  *
  * Plain (non-Compose, non-Android) class so it can be exercised by JVM unit tests with a fake
  * recognizer. The companion @Composable [rememberVoiceInputController] wires it into Compose.

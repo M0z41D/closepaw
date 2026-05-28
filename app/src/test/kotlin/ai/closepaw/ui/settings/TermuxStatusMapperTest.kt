@@ -6,10 +6,10 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 /**
- * Covers every row of the Termux mapping table in `projects/active/tool_settings_unify/design_claude.md`.
+ * Covers every row of the Termux mapping table.
  *
  * The label words are load-bearing — `SettingsTermuxRowTest` (instrumentation) matches on
- * them, and so does the design doc. Tone / spinner / subtitle assertions guard against
+ * them. Tone / spinner / subtitle assertions guard against
  * silent UX regressions when someone edits the mapper.
  */
 class TermuxStatusMapperTest {

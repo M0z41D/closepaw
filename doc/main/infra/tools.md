@@ -176,7 +176,7 @@ known OEM limitations.
 
 `SessionServices.create()` registers the tool and owns `BrowserSessionManager`; `SessionToolingBootstrapper` stays Android-free and does not receive `Context` or create WebViews.
 
-→ See: [browser.md](browser.md) for session lifecycle, Shizuku/CDP ownership, cleanup, and policy details. The project design source of truth remains [Browser CDP runtime design](../../../projects/active/browser/cn/design_codex.md).
+→ See: [browser.md](browser.md) for session lifecycle, Shizuku/CDP ownership, cleanup, and policy details.
 
 ### mobile_action Actions
 

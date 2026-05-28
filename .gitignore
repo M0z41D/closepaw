@@ -51,9 +51,8 @@ captures/
 # Comment next line if keeping position of elements in Navigation Editor is relevant for you
 .idea/navEditor.xml
 
-# Keystore files — never commit. Real keystores live in ~/secrets/closepaw/
-# (outside the repo); these patterns are belt-and-suspenders against accidental
-# in-tree copies.
+# Keystore files — never commit. Keep real signing material outside the repo;
+# these patterns are belt-and-suspenders against accidental in-tree copies.
 *.jks
 *.keystore
 *.password
@@ -149,11 +148,15 @@ export/
 .claude/skills/app-store-screenshots-spec/
 .claude/skills/nano-banana-aso/
 
-# Satellite repo (closepaw-projects) — symlinked from ../closepaw-projects
-# Contains project tasks, agent traces, autotune data. Not for public release.
+# Local project artifacts and private agent working state.
 # (No trailing slash so the patterns also match the symlinks themselves.)
 projects
 .claude/projects
+.closepaw-local.env
+
+# Local agent skill symlinks installed from external workspaces.
+.claude/skills/coding-standards
+.claude/skills/verify
 
 # Personal IDE config
 .vscode/

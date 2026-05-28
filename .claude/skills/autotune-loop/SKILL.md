@@ -50,7 +50,7 @@ When stopping as exhausted:
 
 - Code changes belong to Step 1 inside `/autotune`: `feat(agent): autotune round N — <summary>`
 - End-of-round artifacts belong after analysis: `loop_state.json`, scoreboard, changelog, per-task updates, `issues.md`, and `cannot_handle_group.txt`
-- Round 0 has no fix-step commit; commit the end-of-round artifacts only
+- Artifact files under `projects/autotune/` are ignored by this app repo; persist them only in the configured private artifact workspace.
 
 ## Ralph Invocation
 

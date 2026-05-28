@@ -5,9 +5,7 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 /**
- * Covers every row of the 12-row Virtual Display mapping table in
- * `projects/active/settings_display_perception_refresh/design_claude.md` under
- * "Status mapper — corrected table". First-match-wins ordering is critical: mis-ordering
+ * Covers every row of the 12-row Virtual Display mapping table. First-match-wins ordering is critical: mis-ordering
  * (e.g. surfacing a stale gate error once persisted mode has already flipped to VD) is
  * exactly the regression these tests guard.
  *

@@ -6,7 +6,10 @@ Wants=network-online.target
 [Service]
 Type=simple
 Environment="AUTOSSH_GATETIME=0"
-ExecStart=/bin/bash -c 'source ~/.keychain/%H-sh 2>/dev/null; exec /usr/bin/autossh -M 0 -N -o "ServerAliveInterval 30" -o "ServerAliveCountMax 3" -o "ExitOnForwardFailure yes" -L 18080:127.0.0.1:18080 qiguo@100.95.23.122'
+Environment="PROXY_PORT=18080"
+Environment="PROXY_USER=%u"
+EnvironmentFile=-%h/.config/closepaw/proxy-tunnel.env
+ExecStart=/bin/bash -c ': "${PROXY_HOST:?Set PROXY_HOST in ~/.config/closepaw/proxy-tunnel.env}"; source ~/.keychain/%H-sh 2>/dev/null; exec /usr/bin/autossh -M 0 -N -o "ServerAliveInterval 30" -o "ServerAliveCountMax 3" -o "ExitOnForwardFailure yes" -L "${PROXY_PORT}:127.0.0.1:${PROXY_PORT}" "${PROXY_USER}@${PROXY_HOST}"'
 Restart=on-failure
 RestartSec=5
 

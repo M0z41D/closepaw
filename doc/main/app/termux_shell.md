@@ -13,8 +13,7 @@ Use `termux_shell` for files, repositories, scripts, tests, build tools, and dat
 the existing `shell` tool only for quick Android toybox inspection commands; it has a restricted
 command surface and intentionally rejects shell metacharacters such as pipes and redirects.
 
-Canonical contract: [projects/active/termux_shell/final/design.md](../../../projects/active/termux_shell/final/design.md).
-This page is the runtime map, not a duplicate design spec.
+This page is the runtime map and operational contract.
 
 ## Architecture
 
@@ -112,5 +111,5 @@ Primary files:
   detects the closed client connection and kills the bash process group.
 - v1 does not include standalone file, search, patch, git, or process tools. The agent uses bash for
   those workflows.
-- Shell security hardening is deferred to `projects/active/shell_security/`; loopback-only binding
-  and workspace cwd validation are the v1 boundary.
+- Shell security hardening beyond v1 is deferred; loopback-only binding and workspace cwd validation
+  are the v1 boundary.
