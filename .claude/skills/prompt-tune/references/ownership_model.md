@@ -56,7 +56,7 @@ Given a proposed rule or change, walk top-to-bottom:
 - App-specific entry / edit / save flows
 - App-specific shell caveats
 - App-specific formatting conventions
-- Examples: calendar date navigation, Markor file dialog quirks, Pro Expense save/verify flow
+- Examples: calendar date navigation, Markor file dialog quirks, Pro Expense save-and-check flow
 
 ## Anti-Patterns
 

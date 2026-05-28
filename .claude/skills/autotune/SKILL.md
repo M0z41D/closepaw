@@ -34,7 +34,7 @@ Apply changes from the previous round's approved `## Next Steps`.
 
 - **MUST read `references/tuning_principles.md` before making any change.** Every proposed change must pass its three gates (anti-overfit, token minimalism, generalization).
 - For prompt, tool description, or app skill changes, use `/prompt-tune` to determine the correct ownership layer before editing.
-- **Use `/implement` skill** for all code changes. Do NOT skip any steps in the implementation workflow.
+- For code changes, follow a full implementation workflow: inspect the existing code, make the minimal scoped change, run relevant verification, and do not skip failure analysis.
 - Commit: `feat(agent): autotune round N — <summary>`.
 - **Sync & rebuild**: After committing, push to remote and rebuild the APK so the eval runs against the new code. See Step 3 for the exact commands.
 - Round 0: skip this step.
@@ -106,7 +106,7 @@ Once done with all tasks:
 7. Update `projects/autotune/meta/issues.md` (new issues, resolved issues, parked tasks).
 8. Update `projects/autotune/meta/loop_state.json` as the final control-plane handoff for this round.
 
-Escalate to `/double-design` only when at least one of these is true:
+Stop for deeper design review only when at least one of these is true:
 - The same task cluster has failed for 2+ rounds with no progress.
 - The proposed fix touches the core prompt or major tool semantics.
 - A capability-gap candidate needs confirmation before being parked.
@@ -149,6 +149,5 @@ Wait for approval before the next `/autotune`.
 - Eval runner: `eval/aw_bridge/runner.py`
 - Eval remote config: `eval/config/remote.yaml`
 - Cog-tune skill: `.claude/skills/cog-tune/SKILL.md`
-- Implement skill: `.claude/skills/implement/SKILL.md`
 - Shared tuning principles: `.claude/skills/autotune/references/tuning_principles.md`
 - Loop controller: `.claude/skills/autotune-loop/SKILL.md`

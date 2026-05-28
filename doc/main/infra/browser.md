@@ -175,7 +175,7 @@ JVM coverage:
   placeholder substitution, and sentinel-gated refresh fallback.
 - `BrowserSessionManagerTest` — transport failure, synchronous send failure, server close, full
   CDP/bridge teardown, and reconnect on the next run.
-- `RelayAuthTokenTest` — generate/verify constant-time, header parse, deadline enforcement,
+- `RelayAuthTokenTest` — generate and verify constant-time behavior, header parse, deadline enforcement,
   403/408 wire bytes.
 - `ChromeCdpClientTest`, `ChromeCdpRecoveryTest` — command id mux, target switch atomicity,
   stale-session recovery.

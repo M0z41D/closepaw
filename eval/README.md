@@ -1,7 +1,7 @@
 # ClosePaw Evaluation Harness
 
-This folder contains the Tier 0/1 evaluation implementation described in
-`doc/todo/0.5_eval/align/design/design.md`.
+This folder contains the Tier 0/1 evaluation harness. See
+[`doc/main/eval/eval.md`](../doc/main/eval/eval.md) for the architecture and runbook.
 
 ## What this supports now
 

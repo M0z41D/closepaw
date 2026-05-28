@@ -1,6 +1,6 @@
 ---
 name: build-fix
-description: Fix Gradle/Kotlin build errors incrementally. No refactoring - just get the build green. Use when verify fails.
+description: Fix Gradle/Kotlin build errors incrementally. No refactoring - just get the build green. Use when build verification fails.
 ---
 
 # Build Fix
@@ -9,7 +9,7 @@ Fix Android build errors quickly with minimal diffs.
 
 ## When to Use
 
-- After `/verify` fails with build errors
+- After build, lint, or test verification fails with build errors
 - During development when build breaks
 - Resolving merge conflicts that break build
 

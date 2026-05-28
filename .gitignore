@@ -154,9 +154,5 @@ projects
 .claude/projects
 .closepaw-local.env
 
-# Local agent skill symlinks installed from external workspaces.
-.claude/skills/coding-standards
-.claude/skills/verify
-
 # Personal IDE config
 .vscode/

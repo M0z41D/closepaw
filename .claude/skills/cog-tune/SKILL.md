@@ -163,8 +163,6 @@ Use `rg` to locate prompt or tool definition text before edits.
 
 ## Project references
 
-- Cognition roadmap: `doc/todo/cognition/design_proposal.md`
-- Trace/replay design: `doc/todo/tracking/final_design_codex.md`
 - Debug workflow guide: `doc/dev/visual_debug_guide.md`
 - Debug run script: `scripts/debug-run.sh`
 - Action test harness: `scripts/action-test.sh`

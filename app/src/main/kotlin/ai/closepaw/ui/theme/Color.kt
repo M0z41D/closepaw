@@ -2,7 +2,7 @@ package ai.closepaw.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// D1 palette — see doc/todo/frontend-ui-review/aligned/design_aligned.md §4.1.
+// D1 palette.
 
 // Light ("Paper")
 val Paper = Color(0xFFF5F1EA)

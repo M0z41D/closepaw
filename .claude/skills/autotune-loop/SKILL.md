@@ -1,6 +1,6 @@
 ---
 name: autotune-loop
-description: Autonomous multi-round controller for `/autotune`. Reads and updates `loop_state.json`, decides continue or stop, and emits the Ralph completion promise when the loop is finished.
+description: Autonomous multi-round controller for `/autotune`. Reads and updates `loop_state.json`, decides continue or stop, and records completion state when the loop is finished.
 ---
 
 # AutoTune Loop
@@ -8,7 +8,6 @@ description: Autonomous multi-round controller for `/autotune`. Reads and update
 Thin controller around `/autotune`.
 
 Responsibilities:
-- `ralph-loop`: generic prompt re-feed engine
 - `autotune-loop`: autotune-specific loop policy
 - `autotune`: one round worker
 
@@ -16,22 +15,22 @@ Do not scrape prose or infer loop state from filesystem heuristics. `projects/au
 
 ## Principles
 
-- Keep loop policy simple. One Ralph iteration should do at most one orchestrated `/autotune` round.
+- Keep loop policy simple. One loop iteration should do at most one orchestrated `/autotune` round.
 - Use `.claude/skills/autotune/references/tuning_principles.md` for stop/continue judgment. Do not keep pushing eval-only patches.
 - Use `projects/autotune/meta/scoreboard.json` for retry and "failed 3+ times" decisions.
 
 ## Loop
 
-For each Ralph iteration:
+For each loop iteration:
 
 1. Read `projects/autotune/meta/loop_state.json`.
-2. If `status == "complete"`, emit `<promise>AUTOTUNE_LOOP_COMPLETE</promise>` and exit.
+2. If `status == "complete"`, report completion and exit.
 3. Ensure the active loop run is marked `mode: "auto"` and `status: "running"` before delegating the round.
 4. Invoke exactly one orchestrated `/autotune` round.
    - **Verify sync**: After `/autotune` Step 1 commits changes, confirm the remote has the latest code and APK rebuilt (`git push` + remote `git pull && ./gradlew assembleDebug`) BEFORE the eval runs. `/autotune` Step 3 owns this, but if running `--remote`, double-check the remote is up to date. Running eval on stale code wastes the entire round.
 5. Re-read `projects/autotune/meta/loop_state.json`.
-6. If `last_round.recommended_action` is `stop_success` or `stop_exhausted`, set `status` to `complete`, persist `stop_reason`, emit `<promise>AUTOTUNE_LOOP_COMPLETE</promise>`, and exit.
-7. Otherwise exit normally and let `ralph-loop` re-feed the next iteration.
+6. If `last_round.recommended_action` is `stop_success` or `stop_exhausted`, set `status` to `complete`, persist `stop_reason`, report completion, and exit.
+7. Otherwise exit normally so the next loop iteration can continue.
 
 ## Stop Criteria
 
@@ -51,20 +50,6 @@ When stopping as exhausted:
 - Code changes belong to Step 1 inside `/autotune`: `feat(agent): autotune round N — <summary>`
 - End-of-round artifacts belong after analysis: `loop_state.json`, scoreboard, changelog, per-task updates, `issues.md`, and `cannot_handle_group.txt`
 - Artifact files under `projects/autotune/` are ignored by this app repo; persist them only in the configured private artifact workspace.
-
-## Ralph Invocation
-
-```text
-/ralph-loop "Run /autotune-loop for this repo.
-Read and update projects/autotune/meta/loop_state.json.
-Execute exactly one orchestrated autotune round per iteration.
-Stop only when loop_state.json status=complete, then output
-<promise>AUTOTUNE_LOOP_COMPLETE</promise>." \
---max-iterations 10 \
---completion-promise "AUTOTUNE_LOOP_COMPLETE"
-```
-
-The promise means only "the loop is finished." The actual stop reason lives in `projects/autotune/meta/loop_state.json`.
 
 ## Key Files
 
