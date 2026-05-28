@@ -12,7 +12,6 @@ Affected files:
 - `app/src/test/kotlin/ai/closepaw/platform/ScrollVisualizationGeometryTest.kt`
 - `doc/main/infra/platform.md`
 - `doc/main/ui/overlay.md`
-- `doc/PROGRESS.md`
 
 Key decisions:
 - Keep the change scoped to a11y scroll visualization.
