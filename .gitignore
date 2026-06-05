@@ -110,22 +110,22 @@ __pycache__/
 inspection_tool/debug_data
 debug-output
 .reference/
-projects/progress.json*
+plan/progress.json*
 .multmux
 # QA / debug screenshots — never commit binary evidence under projects/
-projects/**/*.png
-projects/**/*.jpg
-projects/**/*.jpeg
-projects/**/*.webp
-projects/**/*.gif
-projects/**/*.mp4
+plan/**/*.png
+plan/**/*.jpg
+plan/**/*.jpeg
+plan/**/*.webp
+plan/**/*.gif
+plan/**/*.mp4
 # QA uiautomator dumps + visible-text snapshots — useless without their .png pair
-projects/**/qa_screens*/**/*.xml
-projects/**/qa_screens*/**/*_visible.txt
-projects/**/diag_*/**/*.xml
+plan/**/qa_screens*/**/*.xml
+plan/**/qa_screens*/**/*_visible.txt
+plan/**/diag_*/**/*.xml
 # Runtime locks
 .claude/scheduled_tasks.lock
-projects/.tasks.json.lock
+plan/.tasks.json.lock
 # Worktrees
 .worktrees/
 
@@ -150,7 +150,7 @@ export/
 
 # Local project artifacts and private agent working state.
 # (No trailing slash so the patterns also match the symlinks themselves.)
-projects
+plan
 .claude/projects
 .closepaw-local.env
 
