@@ -44,6 +44,17 @@ enum class LLMProvider(
     ),
 
     /**
+     * Google Gemini (Vertex AI) via API key.
+     * Note: In production we recommend server-side service account usage — this entry
+     * supports client-side API-key-based usage from the app (stored in AuthStore).
+     */
+    GEMINI(
+        mode = AuthMode.ApiKey,
+        defaultApiKeyEnv = "GEMINI_API_KEY",
+        defaultBaseUrl = null,
+    ),
+
+    /**
      * User-configured OpenAI-compatible endpoint. Base URL and model id live in
      * [ai.closepaw.app.AppSettingsState] (`otherBaseUrl`, `otherModelId`) and are
      * surfaced as a synthesized `other-custom` catalog entry. No hardcoded URL — the
@@ -70,6 +81,7 @@ val LLMProvider.displayLabel: String
         LLMProvider.OPENAI_API -> "OpenAI"
         LLMProvider.OPENAI_CODEX -> "OpenAI (ChatGPT sign-in)"
         LLMProvider.OPENROUTER -> "OpenRouter"
+        LLMProvider.GEMINI -> "Google Gemini"
         LLMProvider.OTHER -> "Other"
         LLMProvider.LOCAL_LFM -> "Local"
     }

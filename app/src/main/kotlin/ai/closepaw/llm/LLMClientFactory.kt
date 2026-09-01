@@ -107,6 +107,10 @@ class LLMClientFactory(
                     )
             LLMProvider.OPENROUTER ->
                     ChatCompletionClient(store.requireApiKey(LLMProvider.OPENROUTER), baseUrl)
+            LLMProvider.GEMINI ->
+                    // For client-side API-key usage, construct a GeminiClient that reads the
+                    // API key from AuthStore per request.
+                    GeminiClient(apiKeySupplier = { store.requireApiKey(LLMProvider.GEMINI) }, baseUrl = baseUrl)
             LLMProvider.OTHER -> {
                 // Hard-require a non-blank baseUrl at this boundary. If anything upstream
                 // produced a malformed OTHER entry (synth missing settings, stale catalog),
