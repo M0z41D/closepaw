@@ -9,6 +9,7 @@ on:
       - 'PRIVACY_POLICY.md'
       - 'doc/**'
 
+# Izin wajib untuk deployment Pages modern
 permissions:
   contents: read
   pages: write
@@ -16,7 +17,7 @@ permissions:
 
 concurrency:
   group: 'pages'
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -25,10 +26,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Siapkan Dokumen
+      - name: Setup folder web
         run: |
           mkdir -p _site
           if [ -f "PRIVACY_POLICY.md" ]; then
@@ -37,14 +38,14 @@ jobs:
             echo "# Privacy Policy" > _site/index.md
           fi
 
-      - name: Setup GitHub Pages
+      - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Artifacts Pages
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: '_site'
 
-      - name: Deploy ke Pages
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
