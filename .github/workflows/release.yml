@@ -19,7 +19,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -27,7 +27,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK (Release atau Fallback Debug)
+      - name: Build APK
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -40,17 +40,17 @@ jobs:
             export KEYSTORE_PATH="${{ github.workspace }}/release.keystore"
             ./gradlew :app:assembleRelease
           else
-            echo "Secrets keystore tidak terpasang, beralih ke assembleDebug..."
-            ./gradlew :app:assembleDebug
+            echo "Secrets keystore tidak ditemukan, build release tanpa custom keystore..."
+            ./gradlew :app:assembleRelease || ./gradlew :app:assembleDebug
           fi
 
-      - name: Upload APK ke Artifacts
+      - name: Simpan APK ke Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: closepaw-apk
+          name: closepaw-app
           path: app/build/outputs/apk/**/*.apk
 
-      - name: Publikasikan ke GitHub Release
+      - name: Publikasikan ke GitHub Releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -58,10 +58,11 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             TAG_NAME="v$(date +'%Y.%m.%d-%H%M%S')"
           fi
-          
-          APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
-          if [ -n "$APK_FILE" ]; then
-            gh release create "$TAG_NAME" "$APK_FILE" \
+
+          APK_PATH=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
+
+          if [ -n "$APK_PATH" ]; then
+            gh release create "$TAG_NAME" "$APK_PATH" \
               --title "Release $TAG_NAME" \
               --generate-notes || true
           fi
