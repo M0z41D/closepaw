@@ -1,12 +1,13 @@
 name: Deploy Privacy Policy
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
     paths:
-      - doc/release/privacy/**
-  workflow_dispatch:
+      - 'PRIVACY_POLICY.md'
+      - 'doc/**'
 
 permissions:
   contents: read
@@ -14,34 +15,36 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: 'pages'
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}privacy/
-
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure Pages
+      - name: Siapkan Dokumen
+        run: |
+          mkdir -p _site
+          if [ -f "PRIVACY_POLICY.md" ]; then
+            cp PRIVACY_POLICY.md _site/index.md
+          else
+            echo "# Privacy Policy" > _site/index.md
+          fi
+
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Build privacy page
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./doc/release/privacy
-          destination: ./_site
-
-      - name: Upload Pages artifact
+      - name: Upload Artifacts Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./_site
+          path: '_site'
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy ke Pages
         id: deployment
         uses: actions/deploy-pages@v4
